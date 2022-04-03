@@ -1,0 +1,171 @@
+#myWatch.kv
+
+<myWatch>
+    BoxLayout:
+        orientation: 'vertical'
+        spacing:15
+        padding:38
+        BoxLayout:
+            Label:
+                color: 1,0,0,1
+                font_size: '30sp'
+                text:root.mode_label
+        BoxLayout:
+            orientation: 'horizontal'
+            Label:
+                id: hour
+                font_size: '40sp'
+                text:root.hour
+            Label:
+                font_size: '40sp'
+                text:':'
+            Label:
+                id: min
+                font_size:'40sp'
+                text:root.min
+            Label:
+                font_size:'40sp'
+                text:':'
+            Label:
+                id:sec
+                font_size:'40sp'
+                text:root.sec
+            Label:
+                font_size:'40sp'
+                text:':'
+            Label:
+                id:csec
+                font_size:'40sp'
+                text:root.csec
+        BoxLayout:
+            Label:
+                font_size: '15sp'
+                text:'hour'
+                pos_hint: {"center_x": .5, "center_y": .9}
+            Label:
+                font_size: '15sp'
+                text:':'
+                pos_hint: {"center_x": .5, "center_y": .9}
+
+            Label:
+                font_size:'15sp'
+                text:'min'
+                pos_hint: {"center_x": .5, "center_y": .9}
+            Label:
+                font_size:'15sp'
+                text:':'
+                pos_hint: {"center_x": .5, "center_y": .9}
+            Label:
+                font_size:'15sp'
+                text:'sec'
+                pos_hint: {"center_x": .5, "center_y": .9}
+            Label:
+                font_size:'15sp'
+                text:':'
+                pos_hint: {"center_x": .5, "center_y": .9}
+            Label:
+                font_size:'15sp'
+                text:'csec'
+                pos_hint: {"center_x": .5, "center_y": .9}
+
+        BoxLayout:
+            orientation: 'vertical'
+            Label
+                font_size: '24sp'
+                text:'Timer Input Area'
+            Label:
+                id:message
+                font_size: '20sp'
+                color: 1,0,0,1
+                text:root.message
+                pos_hint: {"center_x": .5, "center_y": .9}
+
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing:280
+
+            TextInput:
+                id:hour_input
+                multiline: True
+                readonly: False
+                halign:'center'
+                font_size:'55'
+                pos_hint: {"center_x": .5, "center_y": .5}
+                size_hint: (.1, .6)
+
+            TextInput:
+                id:min_input
+                multiline: True
+                readonly: False
+                halign:'center'
+                font_size:'55'
+                pos_hint: {"center_x": .5, "center_y": .5}
+                size_hint: (.1, .6)
+
+            TextInput:
+                id:sec_input
+                multiline: True
+                readonly: False
+                halign:'center'
+                font_size:'55'
+                pos_hint: {"center_x": .5, "center_y": .5}
+                size_hint: (.1, .6)
+
+        BoxLayout:
+            orientation: 'horizontal'
+            Label:
+                font_size: '15sp'
+                text:'hour'
+                pos_hint: {"center_x": .5, "center_y": .9}
+            Label:
+                font_size: '15sp'
+                text:':'
+                pos_hint: {"center_x": .5, "center_y": .9}
+
+            Label:
+                font_size:'15sp'
+                text:'min'
+                pos_hint: {"center_x": .5, "center_y": .9}
+            Label:
+                font_size:'15sp'
+                text:':'
+                pos_hint: {"center_x": .5, "center_y": .9}
+            Label:
+                font_size:'15sp'
+                text:'sec'
+                pos_hint: {"center_x": .5, "center_y": .9}
+
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing:60
+            Button:
+                font_size:'20sp'
+                text:'Stopwatch Mode'
+                pos_hint: {"center_x": .8, "center_y": .8}
+                size_hint: (.8, .8)
+                on_press:root.stopwatch_mode()
+            Button:
+                font_size:'20sp'
+                text:'Timer Mode'
+                pos_hint: {"center_x": .8, "center_y": .8}
+                size_hint: (.8, .8)
+                on_press:root.timer_mode()
+
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing:80
+            Button:
+                id:start
+                font_size:'24sp'
+                text:'start'
+                on_press:root.start()
+            Button:
+                id:stop
+                font_size:'24sp'
+                text:'stop'
+                on_press:root.stop()
+            Button:
+                id:reset
+                font_size:'24sp'
+                text:'reset'
+                on_press:root.reset()
