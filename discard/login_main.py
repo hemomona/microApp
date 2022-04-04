@@ -16,7 +16,7 @@ class LoginScreen(GridLayout):
     def __init__(self, **kwargs):
         super(LoginScreen, self).__init__(**kwargs)
         self.cols = 2
-        self.add_widget(Label(text='User Name'))
+        self.add_widget(Label(text='中文'))
         self.username = TextInput(multiline=False)
         self.add_widget(self.username)
         self.add_widget(Label(text='password'))
