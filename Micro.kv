@@ -12,7 +12,8 @@
 
 MyScreenManager:
     MainScreen:
-    FeedbackScreen:
+    ExperimentScreen:
+    RecordsScreen:
 
 # normal style of buttons in MainScreen
 <ButtonOfMain@Button>:
@@ -89,10 +90,10 @@ MyScreenManager:
         padding: 0, 60
         ButtonOfMain:
             text: '开始实验'
-            on_release: root.manager.current = 'experiment'
+            on_release: goto_experiment()
         ButtonOfMain:
             text: '查看记录'
-            on_release: root.manager.current = 'records'
+            on_release: root.goto_records()
         ButtonOfMain:
             text: '用户反馈'
-            on_release: root.manager.current = 'feedback'
+            on_release: root.goto_feedback()
