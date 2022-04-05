@@ -1,0 +1,55 @@
+# !/usr/bin/env python
+# -*-coding:utf-8 -*-
+
+"""
+# File       : gesture.py
+# Time       ：2022/4/5 20:38
+# Author     ：Jago
+# Email      ：18146856052@163.com
+# version    ：python 3.7
+# Description：
+"""
+# 构建需要响应的手势数据，通过gesture_board.py 获取
+from kivy.app import App
+from kivy.gesture import GestureDatabase, Gesture
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.screenmanager import Screen
+
+ges_strs = {
+    'left_to_right_line': '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',
+    'right_to_left_line': 'eNpt1WtQlFUYwPElEIQsMU3x2pqpq6nZDTW1PQZ6yMxAMtcLsrCsLIK7+yy7XJSji4pCaWKW10rybml5qxQN1luSpWHkqFlK6Qdn+hA2TpNNkz172mXseXw/LO/89n/Oec+ZdxZ/pC0/r6h0SK690Ovz2ONk6C8YBpRDhIL7TJY2BoOhOC/H64BIKcr/NAQvSzR+OOx5uQ4vRElhNPyn7fEjNFOm2+PK8dm80EaKmI0nenQ/d9ASg18Xej2ufHshRGdAzD2XTtdBHLTFB4hVEGfSa7ldeU5vIdyfAe1M9xyWGgzi4AEc9aCC9iZLBI4qgXhp/mXbhIpBqWYNpdBBmhcbb403zg74sh3B+iEFHU0O7H4u+GnnqCmZDlZ0UvCwLprXDJiacCiNF50VdNHF1cHOuh0nevEiQUFXXfxYuzK64btpvOimoLsuLqf0Tdk97Eqw8K/s139WmiFU9FDQUxcXz8vqM+N68aKXgkd0cWFcRtaGHxp5YVTQWxffm6oiR0QNDxaeax2PXx8ZLh5V0EcXTaYusd5df/DiMQV9dXEuae/SiG8FL/op6K+LsxUb+v0+piBYTFpRcO23ieHCpGCALk4vajI3X7fyYqCCx3Vx8kKnfRM2lWFRn3Slre3Y3+FikILBujjmT4K6gcnBwpZYu/mSKVwMUfCELmqPdzZvHZ/Ki6EKntTFgdu5MrHZwounFDytiy2rbtd16BvgxTMKntVFVXrUN5v+MvAiUcGwYFG/rFv7UclVfl4MVzBCF9tvrr7Vpuc95nhOwUhd7E/IrS86ZuLFKAWjdXF4+c20lvoSXjyvwKyLow2B6tgjp3khFIzRxcnTlcXdu17kxQsKknTx1ar0MsP5FF4kKxirizNnE8aObmrhxTgFUheNX8PWDqf2BQt37e011lP+UJGi4EVdNPVu/PXyjc28GK/gJV2cj050TvxyOi8mKHhZFxdEl+TIzvN5MVHBK7q4FPPPZGsfx/8Ku6Vd8PfK5rHbnaGfn9QMSDNJUbFW/9xJUdyib5bAJMRKiumIguKriCaKk6VYfIPia4gNFKcgVlO0ILopTkUcTnEaYluK06VY1ExxBiLbZgYiW2gm4lCKmYjxFK1SLGzdUXMIsxD9FLMRrRRtiAkUc/B/UiNFO+IOirMQWw8kEMJcKfwNFB2Ifop5UizQG4m4C2cjsjJfivmtj1QTwgLEFXeC1104B1HQ0olopOiSQrVQdCPuoQiIbE4PIpuzUIqyGopexNaT129axBLwSTGvhWIRoiu8I39oeDGiCJ9SGEukmNt6IGEsRaymOBfRQHGeFKUBimWImXR1hTiUlvOlKGmmuACRzelH9FMsRxQUF+L9HoqL8D6V4mIpilhZgcgWWiKFjz3SUkR2IJVSeNnRVSGy8nUpCln5hhQeK8VliPEUl0sB7DnfRGQHskIKNzvkasQaiisRjRTfksLF9r4Kke3obSmcNfQFewfRSnE1IltojRRz2HOuRWTPuQ6RDV8vRYGZvnUbpMgP0NXflWJ260LuEL6H6Kf4vhR5V8NzhnEj4kaKNVI4AnT4B4hszk2IBoqbpchlw7cgsnKrFLNqKG5DFBS3I7LhO6Sws3KnFDnsQD6UwsbwI0S2o11SZFsp7kY0UvxYiiz28J8gsuF7ENnwvVJY2SntQ2TD9yOyvR+QIpMN/xSR7egzRHZKnyOyOQ9KMZPNeQiRzVmLyOY8LEUGG34EkQ3/QooZd+hbV2f3ZWdZYvHe6yqwe7KcNjvUS/OhdcFrvSUKv3BmzbFDwBLs4agve8i/UZQOLA==',
+    'bottom_to_top_line': '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'
+}
+gestures = GestureDatabase()
+for name, ges_str in ges_strs.items():
+    gesture = gestures.str_to_gesture(ges_str)
+    gesture.name = name
+    gestures.add_gesture(gesture)
+
+
+class MyGesture(Screen):
+    def on_touch_down(self, touch):  # 检测开始触摸动作
+        touch.ud['gesture_path'] = [(touch.x, touch.y)]      # 记录动作坐标
+        super().on_touch_down(touch)
+
+    def on_touch_move(self, touch):  # 检测开始划动动作
+        touch.ud['gesture_path'].append((touch.x, touch.y))  # 记录划动坐标
+        super().on_touch_move(touch)
+
+    def on_touch_up(self, touch):    # 当手指抬起时
+        if 'gesture_path' in touch.ud:
+            gesture = Gesture()
+            gesture.add_stroke(touch.ud['gesture_path'])
+            gesture.normalize()
+            match = gestures.find(gesture, minscore=0.6)
+            if match:
+                print('ha ha:', match[1].name)
+        super().on_touch_up(touch)
+
+
+class MygestureApp(App):
+    def build(self):
+        return MyGesture()
+
+
+MygestureApp().run()

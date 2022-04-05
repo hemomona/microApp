@@ -1,0 +1,45 @@
+#: kivy 2.1.0
+
+<ARecordScreen>:
+    name: "arecord"
+    AnchorLayout:
+        anchor_y: 'top'
+        canvas.before:
+            Color:
+                rgba: 1, 1, 1, 0.9
+            Rectangle:
+                size: self.size
+                pos: self.pos
+        BoxLayout:
+            size_hint: None, None
+            size: 360, 30
+            Label:
+                text: '查看记录'
+                font_name: msyhbd
+                font_size: '20sp'
+                color: 0, 0, 0
+    AnchorLayout:
+        anchor_x: 'left'
+        anchor_y: 'top'
+        Button:
+            text: '<首页'
+            size_hint: None, None
+            size: 60, 30
+            font_name: msyh
+            font_size: '20sp'
+            color: 0, 0, 1
+            background_normal: ''
+            background_color: 1, 1, 1, 0.1
+            on_release: root.goto_main()
+    AnchorLayout:
+        anchor_x: 'right'
+        anchor_y: 'top'
+        Button:
+            text: '删除×'
+            size_hint: None, None
+            size: 60, 30
+            font_name: msyh
+            font_size: '20sp'
+            color: 1, 0, 0
+            background_normal: ''
+            background_color: 1, 1, 1, 0.1
