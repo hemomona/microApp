@@ -1,0 +1,64 @@
+<CheckBoxBoxLayout>:
+    canvas:
+        Color:
+            rgba:1,1,1,1
+        Rectangle:
+            pos:self.pos
+            size:self.size
+
+    orientation:'vertical'   # 指定布局方向
+
+    GridLayout:
+        cols: 4
+        padding : 30,30
+        spacing: 20, 20
+        halign:'right'
+        row_default_height: '30dp'
+
+
+        CheckBox:
+            group:'check_0'    # 分组名
+            id:first_check_0  # 添加ID属性
+            color:.9,.2,.1,1   # 设置选择框体颜色,除canvas设置颜色用Color,其他均为color.
+            text:'check_0单选项1'
+        Label:
+            text: '选项1'
+            font_size:20
+            bold:True     #字体加粗
+            color:.5,.2,.5,1   #字体颜色
+            valign: 'middle'
+
+        CheckBox:
+            group:'check_0'
+            id:first_check_1  # 添加ID属性
+            color:.2,.6,.2,1
+            text:'check_0单选项2'
+        Label:
+            text: '选项2'
+            font_size:20
+            bold:True     #字体加粗
+            color:.2,.9,.2,1   #字体颜色
+            valign: 'middle'
+
+        CheckBox:
+            group:'check_0'
+            id:first_check_2  # 添加ID属性
+            color:.2,.2,.6,1
+            text:'check_0单选项3'
+        Label:
+            text: '选项3'
+            font_size:20
+            bold:True     #字体加粗
+            color:.2,.2,.9,1   #字体颜色
+            valign: 'middle'
+
+        CheckBox:
+            id:first_check_3  # 添加ID属性
+            color:.6,.6,.6,1
+            text:'check选项'
+        Label:
+            text: '选项'
+            font_size:20
+            bold:True     #字体加粗
+            color:.9,.2,.2,1   #字体颜色
+            valign: 'middle'

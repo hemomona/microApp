@@ -27,7 +27,7 @@
     <loaded-nodes />
   </component>
   <component name="DBNavigator.Project.DatabaseConsoleManager">
-    <connection id="2006737b-52a2-49ba-85eb-7900219024fe">
+    <connection id="392add21-8a70-4e3a-92ca-5589a8fee607">
       <console name="Connection 1" type="STANDARD" schema="main" session="Main" />
     </connection>
   </component>
@@ -35,11 +35,10 @@
     <open-files />
   </component>
   <component name="DBNavigator.Project.DatabaseSessionManager">
-    <connection id="2006737b-52a2-49ba-85eb-7900219024fe" />
+    <connection id="392add21-8a70-4e3a-92ca-5589a8fee607" />
   </component>
   <component name="DBNavigator.Project.DatasetFilterManager">
-    <filter-actions connection-id="2006737b-52a2-49ba-85eb-7900219024fe" dataset="main.sqlite_sequence" active-filter-id="EMPTY_FILTER" />
-    <filter-actions connection-id="2006737b-52a2-49ba-85eb-7900219024fe" dataset="main.record" active-filter-id="EMPTY_FILTER" />
+    <filter-actions connection-id="392add21-8a70-4e3a-92ca-5589a8fee607" dataset="main.record" active-filter-id="EMPTY_FILTER" />
   </component>
   <component name="DBNavigator.Project.EditorStateManager">
     <last-used-providers />
@@ -70,7 +69,7 @@
   </component>
   <component name="DBNavigator.Project.Settings">
     <connections>
-      <connection id="2006737b-52a2-49ba-85eb-7900219024fe" active="true" signed="false">
+      <connection id="392add21-8a70-4e3a-92ca-5589a8fee607" active="true" signed="false">
         <database>
           <name value="Connection 1" />
           <description value="" />

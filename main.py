@@ -9,31 +9,32 @@
 # version    ：python 3.7
 # Description：
 """
+import os
+import sqlite3
+
 from kivy.app import App
+from kivy.properties import StringProperty, ObjectProperty
+from kivy.resources import resource_add_path
+from kivy.core.text import LabelBase
 from kivy.core.window import Window
-from kivy.gesture import GestureDatabase, Gesture
-from kivy.graphics import Rectangle, Color
 from kivy.lang import Builder
-from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
-from kivy.uix.recycleview import RecycleView
-from kivy.uix.screenmanager import Screen, ScreenManager
+from kivy.uix.popup import Popup
+from kivy.uix.screenmanager import Screen, ScreenManager, NoTransition
 from kivy.uix.scrollview import ScrollView
-from kivy.uix.slider import Slider
 from plyer import email, storagepath, uniqueid
-import sqlite3
+
+from sql import sql_create_record, sql_select_example, sql_insert_record, sql_select_records, sql_disable_record
 
 # replace default font
-import os
-from kivy.resources import resource_add_path
-from kivy.core.text import LabelBase
 resource_add_path(os.path.abspath('./font'))
 LabelBase.register('Roboto', 'MSYH.TTC')
 
+# basic info here
 app_version = '1.0.1'
 db_filepath = 'records.db'
 
@@ -64,72 +65,109 @@ class MainScreen(Screen):
 
 # Declare RecordsScreen in kv
 class RecordsScreen(Screen):
+    check_ref = {}
+    sv = ScrollView()
+
     def __init__(self, **kwargs):
         super(RecordsScreen, self).__init__(**kwargs)
         # if there is no database in the path, it will create one
         conn = sqlite3.connect(db_filepath)
         conn.text_factory = str
-        # ID, if delete, record subject, bacteria name, experiment method...
-        sql_create_record = '''create table if not exists record
-                               (ID integer primary key autoincrement,
-                                enable boolean,
-                                subject varchar(20),
-                                bacteria text,
-                                method text,
-                                create_time TimeStamp default (datetime('now','localtime')),
-                                modify_time TimeStamp default (datetime('now','localtime')),
-                                experiment_path text)'''
+        curs = conn.cursor()
         conn.execute(sql_create_record)
-        # sql_insert_record = '''insert into record
-        #                         (enable, subject, bacteria, method) values
-        #                         (1, '生长曲线实验示例', 'E.coli', '比浊法') '''
-        # conn.execute(sql_insert_record)
-        sql_select_records = '''select ID, subject, bacteria, method, create_time
-                                from record where enable = 1'''
-        rows = conn.execute(sql_select_records)
+        curs.execute(sql_select_example)
+        # print(not curs.fetchone()) # so curs.fetchone() is None when fetch nothing
+        if not curs.fetchone():
+            conn.execute(sql_insert_record)
+        conn.commit()
+        conn.close()
+        self.show_records()
 
+    def show_records(self):
+        conn = sqlite3.connect(db_filepath)
+        conn.text_factory = str
+        rows = conn.execute(sql_select_records)
         # layout is scrollview, layout contains many grids.
-        # in a row, left grid contains a checkbox, right grid contains a box
+        # in a row, left grid contains a checkbox.kv, right grid contains a box
         # a box is vertical and contains a button and a label
-        # sv = ScrollView(size_hint=(1, None), size=(Window.width, Window.height))
-        sv = ScrollView()
         layout = GridLayout(cols=1, padding=40, spacing=10, size_hint_y=None)
         # Make sure the height is such that there is something to scroll.
         layout.bind(minimum_height=layout.setter('height'))
         for row in rows:
             grid = GridLayout(cols=2, size_hint_y=None, height=50)
-            c = CheckBox(color=(0, 1, 1, 1), size_hint_x=None, width=20)
+            c = CheckBox(size_hint_x=None, width=20)
+            # Stores a reference to the CheckBox instance
+            self.check_ref[row[0]] = c
             box = BoxLayout(orientation='vertical')
-            b = Button(text=row[1], height=30)
-            l = Label(text=row[2]+' '+row[3]+row[4], height=20)
+            b = Button(text=row[1], font_size='18sp', size_hint_y=None, height=30,
+                       color=(1, 1, 0, 1), background_color=(0, 0, 0))
+            # italic display bacteria name, regular method and former 10 chars of timestamp
+            l = Label(text='[font=timesi]' + row[2] + '[/font] ' + row[3] + ' ' + row[4] + ' ' + row[5][:10],
+                      markup=True, font_size='14sp', size_hint_y=None, height=20, color=(1, 1, 1, 0.5))
             box.add_widget(b)
             box.add_widget(l)
-            # btn = Button(text=str(i), size_hint_y=None, height=40)
-            # layout.add_widget(btn)
             grid.add_widget(c)
             grid.add_widget(box)
             layout.add_widget(grid)
-        sv.add_widget(layout)
-        self.add_widget(sv)
+        self.sv.add_widget(layout)
+        self.add_widget(self.sv)
         conn.commit()
         conn.close()
 
     def goto_main(self):
-        self.manager.transition.direction = 'right'
         self.manager.current = 'main'
 
-    def dele_record(self, value):
-        print(value)
+    def dele_records(self):
+        conn = sqlite3.connect(db_filepath)
+        curs = conn.cursor()
+        # Iterate over the dictionary storing the CheckBox widgets
+        for idx, wgt in self.check_ref.items():
+            if wgt.active:
+                curs.execute(sql_disable_record, (idx, ))
+        conn.commit()
+        conn.close()
+        # must execute sql after this transaction committed
+        self.remove_widget(self.sv)
+        self.sv = ScrollView()
+        self.show_records()
 
 
 # Declare ExperimentScreen in kv
 class ExperimentScreen(Screen):
-    pass
+    subject = ObjectProperty()
+    object = ObjectProperty()
+    researcher = ObjectProperty()
+    method = ObjectProperty()
 
+    def vali_subject(self):
+        if len(self.subject.text) > 20:
+            popup = Popup(title='× error ×', title_align='center', size_hint=(0.5, 0.2),
+                          content=Label(text='输入名称过长！'))
+            popup.open()
+            self.subject.text = ''
+            return False
+        return True
 
-# Declare MyScreenManager in kv
-class MyScreenManager(ScreenManager):
-    pass
+    def vali_object(self):
+        # Chinese char will be judged as True by isalpha()
+        if not self.object.text.encode('UTF-8').isalpha():
+            popup = Popup(title='× error ×', title_align='center', size_hint=(0.5, 0.2),
+                          content=Label(text='包含非法字符！'))
+            popup.open()
+            self.object.text = ''
+            return False
+        return True
+
+    def start_record(self):
+        if self.subject.text == '' or self.object.text == '' or self.researcher.text == '':
+            popup = Popup(title='× error ×', title_align='center', size_hint=(0.5, 0.2),
+                          content=Label(text='包含空字符串！'))
+            popup.open()
+        if self.vali_subject() and self.vali_object() and self.method.text in self.method.values:
+            print('yes')
+
+    def goto_main(self):
+        self.manager.current = 'main'
 
 
 class MicroApp(App):
@@ -137,7 +175,11 @@ class MicroApp(App):
         # Kivy supports only 1 window per application
         Window.size = (360, 792)
         self.title = 'micro-GCFP'
-        return
+        sm = ScreenManager(transition=NoTransition())
+        sm.add_widget(MainScreen(name='main'))
+        sm.add_widget(RecordsScreen(name='records'))
+        sm.add_widget(ExperimentScreen(name='experiment'))
+        return sm
 
 
 if __name__ == '__main__':

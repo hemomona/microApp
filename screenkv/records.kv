@@ -6,13 +6,19 @@
         anchor_y: 'top'
 #        canvas.before:
 #            Color:
-#                rgba: 1, 1, 1, 0.9
+#                rgba: 1, 1, 1, 0.8
 #            Rectangle:
 #                size: self.size
 #                pos: self.pos
         BoxLayout:
             size_hint: None, None
             size: 360, 30
+#            canvas.before:
+#                Color:
+#                    rgba: 0, 0, 0
+#                Rectangle:
+#                    size: self.size
+#                    pos: self.pos
             Label:
                 text: '查看记录'
                 font_name: msyhbd
@@ -43,13 +49,4 @@
             color: 1, 0, 0
             background_normal: ''
             background_color: 0, 0, 0, 0
-#    ScrollView:
-#        do_scroll_x: False
-#        do_scroll_y: True
-#        Label:
-#            size_hint_y: None
-#            height: self.texture_size[1]
-#            text_size: self.width / 4, None
-#            padding: 10, 40
-#            text:
-#                'really some amazing text\n' * 100
+            on_release: root.dele_records()
