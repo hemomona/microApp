@@ -6,14 +6,16 @@
 # Time       ：2022/4/4 15:32
 # Author     ：Jago
 # Email      ：18146856052@163.com
-# version    ：python 3.7
-# Description：
+# version    ：python 3.7 kivy 2.1
+# Description：main class of micro app
 """
 import os
 import sqlite3
+import logging.config
 
 from kivy.app import App
-from kivy.properties import StringProperty, ObjectProperty
+from kivy.clock import Clock
+from kivy.properties import ObjectProperty, NumericProperty
 from kivy.resources import resource_add_path
 from kivy.core.text import LabelBase
 from kivy.core.window import Window
@@ -24,11 +26,12 @@ from kivy.uix.checkbox import CheckBox
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
-from kivy.uix.screenmanager import Screen, ScreenManager, NoTransition
+from kivy.uix.screenmanager import Screen, ScreenManager
 from kivy.uix.scrollview import ScrollView
 from plyer import email, storagepath, uniqueid
 
-from sql import sql_create_record, sql_select_example, sql_insert_record, sql_select_records, sql_disable_record
+from sql import sql_create_table, sql_select_example, sql_insert_example, sql_select_records, sql_disable_record, \
+    sql_insert_arecord
 
 # replace default font
 resource_add_path(os.path.abspath('./font'))
@@ -37,16 +40,20 @@ LabelBase.register('Roboto', 'MSYH.TTC')
 # basic info here
 app_version = '1.0.1'
 db_filepath = 'records.db'
+logging.config.fileConfig('log.conf')
+logger = logging.getLogger('mylog')
 
 # Loading Multiple .kv files
 # Builder.load_file('screenkv/feedback.kv')
 Builder.load_file('screenkv/records.kv')
+Builder.load_file('screenkv/arecord.kv')
+Builder.load_file('screenkv/information.kv')
 Builder.load_file('screenkv/experiment.kv')
 
 
 class MainScreen(Screen):
-    def goto_experiment(self):
-        self.manager.current = 'experiment'
+    def goto_information(self):
+        self.manager.current = 'information'
 
     def goto_records(self):
         self.manager.current = 'records'
@@ -65,7 +72,12 @@ class MainScreen(Screen):
 
 # Declare RecordsScreen in kv
 class RecordsScreen(Screen):
+    # (id, checkbox instance)
     check_ref = {}
+    # (button instance, id)
+    button_ref = {}
+    # id of the pressed button
+    active_record_id = NumericProperty(1)
     sv = ScrollView()
 
     def __init__(self, **kwargs):
@@ -74,22 +86,25 @@ class RecordsScreen(Screen):
         conn = sqlite3.connect(db_filepath)
         conn.text_factory = str
         curs = conn.cursor()
-        conn.execute(sql_create_record)
+        conn.execute(sql_create_table)
         curs.execute(sql_select_example)
         # print(not curs.fetchone()) # so curs.fetchone() is None when fetch nothing
         if not curs.fetchone():
-            conn.execute(sql_insert_record)
+            conn.execute(sql_insert_example)
         conn.commit()
         conn.close()
-        self.show_records()
+        Clock.schedule_once(self.show_records)
 
-    def show_records(self):
+    def show_records(self, dt):
         conn = sqlite3.connect(db_filepath)
         conn.text_factory = str
         rows = conn.execute(sql_select_records)
         # layout is scrollview, layout contains many grids.
         # in a row, left grid contains a checkbox.kv, right grid contains a box
         # a box is vertical and contains a button and a label
+        # I AM SO GOOD! refresh the screen through clock, remove and re-add of self.sv.
+        self.remove_widget(self.sv)
+        self.sv = ScrollView(size_hint=(1, 0.95))
         layout = GridLayout(cols=1, padding=40, spacing=10, size_hint_y=None)
         # Make sure the height is such that there is something to scroll.
         layout.bind(minimum_height=layout.setter('height'))
@@ -99,8 +114,9 @@ class RecordsScreen(Screen):
             # Stores a reference to the CheckBox instance
             self.check_ref[row[0]] = c
             box = BoxLayout(orientation='vertical')
-            b = Button(text=row[1], font_size='18sp', size_hint_y=None, height=30,
+            b = Button(text=row[1], on_release=self.show_arecord, font_size='18sp', size_hint_y=None, height=30,
                        color=(1, 1, 0, 1), background_color=(0, 0, 0))
+            self.button_ref[b] = row[0]
             # italic display bacteria name, regular method and former 10 chars of timestamp
             l = Label(text='[font=timesi]' + row[2] + '[/font] ' + row[3] + ' ' + row[4] + ' ' + row[5][:10],
                       markup=True, font_size='14sp', size_hint_y=None, height=20, color=(1, 1, 1, 0.5))
@@ -114,8 +130,9 @@ class RecordsScreen(Screen):
         conn.commit()
         conn.close()
 
-    def goto_main(self):
-        self.manager.current = 'main'
+    def show_arecord(self, instance):
+        self.active_record_id = int(self.button_ref.get(instance))
+        self.goto_arecord()
 
     def dele_records(self):
         conn = sqlite3.connect(db_filepath)
@@ -126,21 +143,34 @@ class RecordsScreen(Screen):
                 curs.execute(sql_disable_record, (idx, ))
         conn.commit()
         conn.close()
-        # must execute sql after this transaction committed
-        self.remove_widget(self.sv)
-        self.sv = ScrollView()
-        self.show_records()
+        Clock.schedule_once(self.show_records)
+
+    def goto_main(self):
+        self.manager.current = 'main'
+
+    def goto_arecord(self):
+        self.manager.current = 'arecord'
 
 
-# Declare ExperimentScreen in kv
-class ExperimentScreen(Screen):
+# Declare ARecordScreen in kv
+class ARecordScreen(Screen):
+    record_id = NumericProperty(1)
+
+    # bind it to the active_record_id in Micro.kv
+    def on_record_id(self, widget, records):
+        print(self.record_id)
+
+
+# Declare InformationScreen in kv
+class InformationScreen(Screen):
     subject = ObjectProperty()
     object = ObjectProperty()
     researcher = ObjectProperty()
     method = ObjectProperty()
 
     def vali_subject(self):
-        if len(self.subject.text) > 20:
+        strs = self.subject.text
+        if len(strs) > 20:
             popup = Popup(title='× error ×', title_align='center', size_hint=(0.5, 0.2),
                           content=Label(text='输入名称过长！'))
             popup.open()
@@ -149,10 +179,12 @@ class ExperimentScreen(Screen):
         return True
 
     def vali_object(self):
+        strs = self.object.text
+        # allow space, dot, (, ) in the object
+        strs = strs.replace('.', '').replace(' ', '').replace('(', '').replace(')', '')
         # Chinese char will be judged as True by isalpha()
-        if not self.object.text.encode('UTF-8').isalpha():
-            popup = Popup(title='× error ×', title_align='center', size_hint=(0.5, 0.2),
-                          content=Label(text='包含非法字符！'))
+        if not strs.encode('utf-8').isalpha():
+            popup = Popup(title='× error ×', title_align='center', size_hint=(0.5, 0.2), content=Label(text='包含非法字符！'))
             popup.open()
             self.object.text = ''
             return False
@@ -160,14 +192,41 @@ class ExperimentScreen(Screen):
 
     def start_record(self):
         if self.subject.text == '' or self.object.text == '' or self.researcher.text == '':
-            popup = Popup(title='× error ×', title_align='center', size_hint=(0.5, 0.2),
-                          content=Label(text='包含空字符串！'))
+            popup = Popup(title='× error ×', title_align='center', size_hint=(0.5, 0.2), content=Label(text='包含空字符串！'))
             popup.open()
-        if self.vali_subject() and self.vali_object() and self.method.text in self.method.values:
-            print('yes')
+        elif self.method.text not in self.method.values:
+            popup = Popup(title='× error ×', title_align='center', size_hint=(0.5, 0.2), content=Label(text='未选实验方法！'))
+            popup.open()
+        elif self.vali_subject() and self.vali_object():
+            conn = sqlite3.connect(db_filepath)
+            conn.text_factory = str
+            curs = conn.cursor()
+            curs.execute(sql_insert_arecord, (self.subject.text, self.object.text, self.method.text, self.researcher.text))
+            conn.commit()
+            conn.close()
+            self.goto_experiment()
+        else:
+            popup = Popup(title='× error ×', title_align='center', size_hint=(0.5, 0.2),
+                          content=Label(text='预期外的错误！'))
+            popup.open()
 
     def goto_main(self):
         self.manager.current = 'main'
+
+    def goto_principle(self):
+        self.manager.current = 'principle'
+
+    def goto_experiment(self):
+        self.manager.current = 'experiment'
+
+
+# Declare ExperimentScreen in kv
+class ExperimentScreen(Screen):
+    pass
+
+
+class MyScreenManager(ScreenManager):
+    pass
 
 
 class MicroApp(App):
@@ -175,14 +234,13 @@ class MicroApp(App):
         # Kivy supports only 1 window per application
         Window.size = (360, 792)
         self.title = 'micro-GCFP'
-        sm = ScreenManager(transition=NoTransition())
-        sm.add_widget(MainScreen(name='main'))
-        sm.add_widget(RecordsScreen(name='records'))
-        sm.add_widget(ExperimentScreen(name='experiment'))
-        return sm
+        return
 
 
 if __name__ == '__main__':
     # The name of the kv file must match the part before the App ending.
     # e.g. pongApp -> pong.kv
-    MicroApp().run()
+    try:
+        MicroApp().run()
+    except Exception as e:
+        logger.exception(e)

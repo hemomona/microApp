@@ -1,0 +1,20 @@
+2022-04-07 10:06:46 - root - DEBUG     - log.py   : 27 line - This is  DEBUG !!
+2022-04-07 10:06:46 - root - INFO      - log.py   : 28 line - This is  INFO !!
+2022-04-07 10:06:46 - root - WARNING   - log.py   : 29 line - This is  WARNING !!
+2022-04-07 10:06:46 - root - ERROR     - log.py   : 30 line - This is  ERROR !!
+2022-04-07 10:06:46 - root - CRITICAL  - log.py   : 31 line - This is  CRITICAL !!
+2022-04-07 10:06:46 - root - ERROR     - log.py   : 40 line - division by zero
+Traceback (most recent call last):
+  File "D:/code/microApp/discard/log.py", line 37, in <module>
+    3/0
+ZeroDivisionError: division by zero
+DEBUG:root:This is  DEBUG !!
+INFO:root:This is  INFO !!
+WARNING:root:This is  WARNING !!
+ERROR:root:This is  ERROR !!
+CRITICAL:root:This is  CRITICAL !!
+ERROR:root:division by zero
+Traceback (most recent call last):
+  File "D:/code/microApp/discard/log.py", line 37, in <module>
+    3/0
+ZeroDivisionError: division by zero

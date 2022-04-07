@@ -1,0 +1,105 @@
+#: kivy 2.1.0
+
+<LabelOfInformation@Label>
+    font_name: msyh
+    font_size: '18sp'
+    size_hint_x: 0.3
+
+<TextInputOfInformation@TextInput>
+    font_size: '16sp'
+    multiline: False
+    size_hint_x: 0.9
+    size_hint_y: None
+    height: 30
+
+<AnchorLayoutOfInformation@AnchorLayout>
+    anchor_x: 'center'
+    anchor_y: 'center'
+
+<InformationScreen>:
+    name: "information"
+    subject: subject_input
+    object: object_input
+    researcher: researcher_input
+    method: method_spinner
+
+    AnchorLayout:
+        anchor_y: 'top'
+        BoxLayout:
+            size_hint: None, None
+            size: 360, 30
+            Label:
+                text: '实验信息'
+                font_name: msyhbd
+                font_size: '20sp'
+    AnchorLayout:
+        anchor_x: 'left'
+        anchor_y: 'top'
+        Button:
+            text: '<首页'
+            size_hint: None, None
+            size: 60, 30
+            font_name: msyh
+            font_size: '20sp'
+            color: 0, 0, 1
+            background_normal: ''
+            background_color: 0, 0, 0, 0
+            on_release: root.goto_main()
+    AnchorLayout:
+        anchor_x: 'right'
+        anchor_y: 'top'
+        Button:
+            text: '原理◎'
+            size_hint: None, None
+            size: 60, 30
+            font_name: msyh
+            font_size: '20sp'
+            color: 0, 1, 0
+            background_normal: ''
+            background_color: 0, 0, 0, 0
+            on_release: root.goto_principle()
+    AnchorLayout:
+        anchor_x: 'center'
+        anchor_y: 'center'
+        GridLayout:
+            cols: 2
+            size_hint: 0.8, 0.5
+            LabelOfInformation:
+                text: '报告名称'
+            AnchorLayoutOfInformation
+                TextInputOfInformation:
+                    id: subject_input
+                    text: '20字符以内'
+                    on_text_validate: root.vali_subject()
+            LabelOfInformation:
+                text: '实验对象'
+            AnchorLayoutOfInformation
+                TextInputOfInformation:
+                    id: object_input
+                    text: 'scientific name'
+                    font_name: timesi
+                    on_text_validate: root.vali_object()
+            LabelOfInformation:
+                text: '实验人员'
+            AnchorLayoutOfInformation
+                TextInputOfInformation:
+                    id: researcher_input
+            LabelOfInformation:
+                text: '实验方法'
+            AnchorLayoutOfInformation
+                Spinner:
+                    id: method_spinner
+                    size_hint_x: 0.9
+                    size_hint_y: None
+                    height: 30
+                    text: '点击选择'
+                    values: '比浊法', '计数法', '菌丝测长法'
+#                    on_text: print(self.text)
+    Button:
+        text: '开始记录'
+        size_hint: 0.5, None
+        height: 60
+        pos_hint: {'x': 0.25, 'y': 0.2}
+        font_size: '20sp'
+        background_color: 0, 0.749, 1, 1
+        on_release: root.start_record()

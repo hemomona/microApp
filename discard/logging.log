@@ -1,0 +1,2 @@
+2022-04-07 10:32:51,262 - simpleExample - ERROR     - log.py   : 51 line - error message
+2022-04-07 10:32:51,262 - simpleExample - CRITICAL  - log.py   : 52 line - critical message
