@@ -1,4 +1,4 @@
-#: kivy 2.1.0
+#:kivy 2.1.0
 
 <ARecordScreen>:
     name: "arecord"
@@ -9,7 +9,7 @@
             size: 360, 30
             Label:
                 text: '修订记录'
-                font_name: msyhbd
+#                font_name: msyhbd
                 font_size: '20sp'
     AnchorLayout:
         anchor_x: 'left'
@@ -18,12 +18,12 @@
             text: '<返回'
             size_hint: None, None
             size: 60, 30
-            font_name: msyh
+#            font_name: msyh
             font_size: '20sp'
             color: 0, 0, 1
             background_normal: ''
             background_color: 0, 0, 0, 0
-            on_release: root.goto_main()
+            on_release: root.goto_records()
     AnchorLayout:
         anchor_x: 'right'
         anchor_y: 'top'
@@ -31,10 +31,11 @@
             text: '保存√'
             size_hint: None, None
             size: 60, 30
-            font_name: msyh
+#            font_name: msyh
             font_size: '20sp'
             color: 0, 0, 1
             background_normal: ''
             background_color: 0, 0, 0, 0
+            on_release: root.save_arecord()
     Label:
         text: str(root.record_id)
