@@ -1,5 +1,9 @@
+#MyScreenManager:
+#    MainScreen:
+#    InformationScreen:
 
-# normal style of buttons in MainScreen
+#:set img './labmicroscope.jpg'
+
 <ButtonOfMain@Button>:
     # size_hint means relative width and height of father widget
     size_hint_x: 0.5
@@ -7,14 +11,30 @@
     pos_hint: {'x': 0.25}
     size_hint_y: None
     height: 60
+#    font_name: msyhbd
     font_size: '20sp'
     background_color: 0, 0.749, 1, 1
 
 <LabelOfMain@Label>
+#    font_name: msyhbd
     font_size: '24sp'
 
 <MainScreen>
     name: "main"
+    # In AnchorLayout, Widgets can be anchored to
+    # the ‘top’, ‘bottom’, ‘left’, ‘right’ or ‘center’.
+    AnchorLayout:
+        anchor_y: 'top'
+        BoxLayout:
+            Image:
+                source: img
+                width: self.width
+                height: 240
+                size_hint_y: None
+                pos_hint: {'top': 1}
+                # the following 2 lines to make picture stretch
+                allow_stretch: True
+                keep_ratio: False
     AnchorLayout:
         anchor_x: 'left'
         anchor_y: 'top'
@@ -23,6 +43,8 @@
             size: 150, 30
             Label:
                 text: 'micro-GCFP'
+#                font_name: timesbi
+#                font_style: 'italic'
                 font_size: '24sp'
                 color: 0, 0, 0
     AnchorLayout:
@@ -33,6 +55,8 @@
             Label:
                 text: '微生物生长曲线拟合\n虚拟实验平台'
                 halign: 'center'
+#                font_name: msyhbd
+#                font_style: 'bold'
                 font_size: '28sp'
                 color: 0, 0, 0
     AnchorLayout:

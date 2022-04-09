@@ -12,8 +12,8 @@
 #                size: self.size
 #                pos: self.pos
         BoxLayout:
-            size_hint: None, None
-            size: 360, 30
+            size_hint_y: None
+            height: '30dp'
 #            canvas.before:
 #                Color:
 #                    rgba: 0, 0, 0
@@ -22,7 +22,7 @@
 #                    pos: self.pos
             Label:
                 text: '查看记录'
-#                font_name: msyhbd
+                font_name: msyhbd
                 font_size: '20sp'
 #                color: 0, 0, 0
     AnchorLayout:
@@ -31,8 +31,7 @@
         Button:
             text: '<首页'
             size_hint: None, None
-            size: 60, 30
-#            font_name: msyh
+            size: '60dp', '30dp'
             font_size: '20sp'
             color: 0, 0, 1
             background_normal: ''
@@ -44,8 +43,7 @@
         Button:
             text: '删除×'
             size_hint: None, None
-            size: 60, 30
-#            font_name: msyh
+            size: '60dp', '30dp'
             font_size: '20sp'
             color: 1, 0, 0
             background_normal: ''

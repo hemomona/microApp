@@ -1,14 +1,35 @@
 #:kivy 2.1.0
+<LabelOfExperiment@Label>
+    font_size: '16sp'
+    size_hint_x: 0.1
+    height: '30dp'
+    pos_hint: {'right': 0.2}
+
+<TextInputOfExperiment@TextInput>
+    size_hint_y: None
+
+<ButtonOfExperiment@Button>
+    font_size: '12sp'
+    background_color: 0, 0.749, 1, 0.5
 
 <ExperimentScreen>:
     name: "experiment"
+    purpose: purpose_input
+    principle: principle_input
+    equipment: equipment_input
+    steps: steps_input
+    result: result_input
+    discussion: discussion_input
+    lo: mylo
+    bb: mybb.__self__
     AnchorLayout:
         anchor_y: 'top'
         BoxLayout:
-            size_hint: None, None
-            size: 360, 30
+            size_hint_y: None
+            height: '30dp'
             Label:
                 text: '实验记录'
+                font_name: msyhbd
                 font_size: '20sp'
     AnchorLayout:
         anchor_x: 'left'
@@ -16,7 +37,7 @@
         Button:
             text: '<首页'
             size_hint: None, None
-            size: 60, 30
+            size: '60dp', '30dp'
             font_size: '20sp'
             color: 0, 0, 1
             background_normal: ''
@@ -28,9 +49,72 @@
         Button:
             text: '保存√'
             size_hint: None, None
-            size: 60, 30
+            size: '60dp', '30dp'
             font_size: '20sp'
-            color: 1, 0, 0
+            color: 0, 0, 1
             background_normal: ''
             background_color: 0, 0, 0, 0
             on_release: root.save_arecord()
+    ScrollView:
+        size_hint_y: 0.95
+        BoxLayout:
+            id: mylo
+            orientation: 'vertical'
+            padding: '20dp'
+            spacing: '20dp'
+            size_hint_y: None
+            height: self.minimum_height
+            LabelOfExperiment:
+                text: '目的'
+            TextInputOfExperiment:
+                id: purpose_input
+                height: '120dp'
+            LabelOfExperiment:
+                text: '原理'
+            TextInputOfExperiment:
+                id: principle_input
+                height: '240dp'
+            LabelOfExperiment:
+                text: '材料'
+            TextInputOfExperiment:
+                id: equipment_input
+                height: '80dp'
+            LabelOfExperiment:
+                text: '步骤'
+            TextInputOfExperiment:
+                id: steps_input
+                height: '360dp'
+            LabelOfExperiment:
+                text: '结果'
+            TextInputOfExperiment:
+                id: result_input
+                height: '360dp'
+            LabelOfExperiment:
+                text: '讨论'
+            TextInputOfExperiment:
+                id: discussion_input
+                height: '360dp'
+    FloatLayout:
+        Button:
+            text: '+'
+            valign: 'center'
+            font_size: '30sp'
+            size_hint: None, None
+            size: '30dp', '30dp'
+            center: root.width * 3/4, root.height / 12
+            background_color: 0, 0.749, 1, 1
+            on_release: root.show_bubble()
+    Bubble:
+        id: mybb
+        orientation: 'vertical'
+        arrow_pos: 'right_mid'
+        size_hint: None, None
+        size: '60dp', '80dp'
+        pos_hint: {'right': 0.7}
+        center_y: root.height / 12
+        ButtonOfExperiment:
+            text: '创建表格'
+        ButtonOfExperiment:
+            text: '表格绘图'
+        ButtonOfExperiment:
+            text: '上传图片'

@@ -3,31 +3,31 @@
 # "#:set a b" in kv equals "a=b" in python
 
 #:kivy 2.1.0
-#:import NoTransition kivy.uix.screenmanager.NoTransition
 
-# the followings are risky
-# #:set msyh kivy.resources.resource_find("font/MSYH.TTC")
-# #:set msyhbd kivy.resources.resource_find("font/MSYHBD.TTC")
-# #:set times kivy.resources.resource_find("font/times.ttf")
-# #:set timesi kivy.resources.resource_find("font/timesi.ttf")
-# #:set timesbi kivy.resources.resource_find("font/timesbi.ttf")
+#:set msyh kivy.resources.resource_find("./font/MSYH.TTC")
+#:set msyhbd kivy.resources.resource_find("./font/MSYHBD.TTC")
+#:set times kivy.resources.resource_find("./font/times.ttf")
+#:set timesi kivy.resources.resource_find("./font/timesi.ttf")
+#:set timesbi kivy.resources.resource_find("./font/timesbi.ttf")
 
-#:set img 'pics/labmicroscope.jpg'
+#:set img './pics/labmicroscope.jpg'
 
-MyScreenManager:
-    transition: NoTransition()
-    MainScreen:
-    RecordsScreen:
-        id: records
-    ARecordScreen:
-        # add RecordsScreen as a property
-        records: records
-        record_id: records.active_record_id
-    InformationScreen:
-        id: information
-    ExperimentScreen:
-        information: information
-        record_id: information.insert_record_id
+# this way of defining ScreenManager is not allowed on Android
+# #:import NoTransition kivy.uix.screenmanager.NoTransition
+#MyScreenManager:
+#    transition: NoTransition()
+#    MainScreen:
+#    RecordsScreen:
+#        id: records
+#    ARecordScreen:
+#        # add RecordsScreen as a property
+#        records: records
+#        record_id: records.active_record_id
+#    InformationScreen:
+#        id: information
+#    ExperimentScreen:
+#        information: information
+#        record_id: information.insert_record_id
 
 # normal style of buttons in MainScreen
 <ButtonOfMain@Button>:
@@ -36,13 +36,13 @@ MyScreenManager:
     # in x axis, the relative distance to border is 0.25
     pos_hint: {'x': 0.25}
     size_hint_y: None
-    height: 60
-#    font_name: msyhbd
+    height: '60dp'
+    font_name: msyhbd
     font_size: '20sp'
     background_color: 0, 0.749, 1, 1
 
 <LabelOfMain@Label>
-#    font_name: msyhbd
+    font_name: msyhbd
     font_size: '24sp'
 
 <MainScreen>
@@ -57,7 +57,7 @@ MyScreenManager:
             Image:
                 source: img
                 width: self.width
-                height: 240
+                height: '240dp'
                 size_hint_y: None
                 pos_hint: {'top': 1}
                 # the following 2 lines to make picture stretch
@@ -68,31 +68,31 @@ MyScreenManager:
         anchor_y: 'top'
         BoxLayout:
             size_hint: None, None
-            size: 150, 30
+            size: '150dp', '30dp'
             Label:
                 text: 'micro-GCFP'
-#                font_name: timesbi
-#                font_style: 'italic'
+                font_name: timesbi
+                font_style: 'italic'
                 font_size: '24sp'
                 color: 0, 0, 0
     AnchorLayout:
         anchor_y: 'top'
         BoxLayout:
             size_hint_y: None
-            height: 240
+            height: '240dp'
             Label:
                 text: '微生物生长曲线拟合\n虚拟实验平台'
                 halign: 'center'
-#                font_name: msyhbd
-#                font_style: 'bold'
+                font_name: msyhbd
+                font_style: 'bold'
                 font_size: '28sp'
                 color: 0, 0, 0
     AnchorLayout:
         BoxLayout:
             orientation: 'vertical'
             size_hint_y: None
-            height: 100
-            spacing: '20'
+            height: '100dp'
+            spacing: '20dp'
             LabelOfMain:
                 text: '呈现实验原理 | 辅助实验记录'
             LabelOfMain:
@@ -101,9 +101,9 @@ MyScreenManager:
         orientation: 'vertical'
         # need to set size_hint_y to None for setting the height
         size_hint_y: None
-        height: 360
-        spacing: '20'
-        padding: 0, 60
+        height: '360dp'
+        spacing: '20dp'
+        padding: 0, '60dp'
         ButtonOfMain:
             text: '开始实验'
             on_release: root.goto_information()

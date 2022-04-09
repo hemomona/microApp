@@ -9,13 +9,11 @@
 # version    ：python 3.7 kivy 2.1
 # Description：main class of micro app,
               directory "discard" places codes what I test,
-              directory "fonts" is used to replace default font on my windows11,
-              but not used on Android for having modified config.py of kivy in my ubuntu18.
+              directory "font" is used to replace default font. can not modify config.py of kivy in my ubuntu18.
 """
 import os
 import sqlite3
 import logging.config
-from datetime import datetime
 
 from kivy.app import App
 from kivy.clock import Clock
@@ -25,12 +23,13 @@ from kivy.core.text import LabelBase
 from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.bubble import Bubble
 from kivy.uix.button import Button
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
-from kivy.uix.screenmanager import Screen, ScreenManager
+from kivy.uix.screenmanager import Screen, ScreenManager, NoTransition
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.textinput import TextInput
 from plyer import email, storagepath, uniqueid
@@ -38,19 +37,20 @@ from plyer import email, storagepath, uniqueid
 from sql import sql_create_table, sql_select_example, sql_insert_example, sql_select_records, sql_disable_arecord, \
     sql_insert_arecord, sql_update_arecord
 
-# replace default font on my Windows computer
-# if on Android phone, need to be deleted the following 2 lines while packaging
+# replace default font
 resource_add_path(os.path.abspath('./font'))
 LabelBase.register('Roboto', 'MSYH.TTC')
 
 # basic info here
 app_version = '1.0.1'
-db_filepath = 'records.db'
+db_filepath = './records.db'
 # logging.config.fileConfig('log.conf')
 # logger = logging.getLogger('mylog')
 
 # Loading Multiple .kv files
-# Builder.load_file('screenkv/feedback.kv')
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# MUST LOAD Micro.kv if on ANDROID!!!!!!!!!!!!!
+Builder.load_file('Micro.kv')
 Builder.load_file('screenkv/records.kv')
 Builder.load_file('screenkv/arecord.kv')
 Builder.load_file('screenkv/information.kv')
@@ -111,21 +111,21 @@ class RecordsScreen(Screen):
         # I AM SO GOOD! refresh the screen through clock, remove and re-add of self.sv.
         self.remove_widget(self.sv)
         self.sv = ScrollView(size_hint=(1, 0.95))
-        layout = GridLayout(cols=1, padding=40, spacing=10, size_hint_y=None)
+        layout = GridLayout(cols=1, padding='40dp', spacing='10dp', size_hint_y=None)
         # Make sure the height is such that there is something to scroll.
         layout.bind(minimum_height=layout.setter('height'))
         for row in rows:
-            grid = GridLayout(cols=2, size_hint_y=None, height=50)
-            c = CheckBox(size_hint_x=None, width=20)
+            grid = GridLayout(cols=2, size_hint_y=None, height='50dp')
+            c = CheckBox(size_hint_x=None, width='20dp')
             # Stores a reference to the CheckBox instance
             self.check_ref[row[0]] = c
             box = BoxLayout(orientation='vertical')
-            b = Button(text=row[1], on_release=self.show_arecord, font_size='18sp', size_hint_y=None, height=30,
+            b = Button(text=row[1], on_release=self.show_arecord, font_size='18sp', size_hint_y=None, height='30dp',
                        color=(1, 1, 0, 1), background_color=(0, 0, 0))
             self.button_ref[b] = row[0]
             # italic display bacteria name, regular method and former 10 chars of timestamp
-            l = Label(text=row[2] + ' ' + row[3] + ' ' + row[4] + ' ' + row[5][:10],
-                      markup=True, font_size='14sp', size_hint_y=None, height=20, color=(1, 1, 1, 0.5))
+            l = Label(text='[font=timesi]'+row[2] + '[/font] ' + row[3] + ' ' + row[4] + ' ' + row[5][:10],
+                      markup=True, font_size='14sp', size_hint_y=None, height='20dp', color=(1, 1, 1, 0.5))
             box.add_widget(b)
             box.add_widget(l)
             grid.add_widget(c)
@@ -155,6 +155,7 @@ class RecordsScreen(Screen):
         self.manager.current = 'main'
 
     def goto_arecord(self):
+        self.manager.get_screen('arecord').record_id = self.active_record_id
         self.manager.current = 'arecord'
 
 
@@ -196,7 +197,7 @@ class InformationScreen(Screen):
         strs = self.object.text
         # allow space, dot, (, ) in the object
         strs = strs.replace('.', '').replace(' ', '').replace('(', '').replace(')', '')
-        # Chinese char will be judged as True by isalpha()
+        # Chinese char will be directly judged as True by isalpha()
         if not strs.encode('utf-8').isalpha():
             popup = Popup(title='× error ×', title_align='center', size_hint=(0.5, 0.2), content=Label(text='包含非法字符！'))
             popup.open()
@@ -229,43 +230,32 @@ class InformationScreen(Screen):
         self.manager.current = 'main'
 
     def goto_experiment(self):
+        self.manager.get_screen('experiment').record_id = self.insert_record_id
         self.manager.current = 'experiment'
 
 
 # Declare ExperimentScreen in kv
 class ExperimentScreen(Screen):
     record_id = NumericProperty(1)
-    purpose = StringProperty('')
-    principle = StringProperty('')
-    equipment = StringProperty('')
-    step = StringProperty('')
-    result = StringProperty('')
-    discussion = StringProperty('')
-    sv = ScrollView()
+    purpose = ObjectProperty()
+    principle = ObjectProperty()
+    equipment = ObjectProperty()
+    steps = ObjectProperty()
+    result = ObjectProperty()
+    discussion = ObjectProperty()
+    lo = BoxLayout()
+    bb = Bubble()
 
     def __init__(self, **kwargs):
         super(ExperimentScreen, self).__init__(**kwargs)
-        Clock.schedule_once(self.refresh_content)
+        self.remove_widget(self.bb)
 
-    def refresh_content(self, dt):
-        self.remove_widget(self.sv)
-        self.sv = ScrollView(size_hint=(1, 0.95))
-        layout = BoxLayout(orientation='vertical', padding=20, size_hint_y=None)
-        layout.bind(minimum_height=layout.setter('height'))
-        layout.add_widget(Label(text='目的', font_size='16sp', size_hint=(0.1, None), height=30, pos_hint={'right': 0.2}))
-        layout.add_widget(TextInput(text=self.purpose, size_hint_y=None, height=120))
-        layout.add_widget(Label(text='原理', font_size='16sp', size_hint=(0.1, None), height=30, pos_hint={'right': 0.2}))
-        layout.add_widget(TextInput(text=self.principle, size_hint_y=None, height=240))
-        layout.add_widget(Label(text='材料', font_size='16sp', size_hint=(0.1, None), height=30, pos_hint={'right': 0.2}))
-        layout.add_widget(TextInput(text=self.equipment, size_hint_y=None, height=80))
-        layout.add_widget(Label(text='步骤', font_size='16sp', size_hint=(0.1, None), height=30, pos_hint={'right': 0.2}))
-        layout.add_widget(TextInput(text=self.step, size_hint_y=None, height=360))
-        layout.add_widget(Label(text='结果', font_size='16sp', size_hint=(0.1, None), height=30, pos_hint={'right': 0.2}))
-        layout.add_widget(TextInput(text=self.result, size_hint_y=None, height=300))
-        layout.add_widget(Label(text='讨论', font_size='16sp', size_hint=(0.1, None), height=30, pos_hint={'right': 0.2}))
-        layout.add_widget(TextInput(text=self.discussion, size_hint_y=None, height=240))
-        self.sv.add_widget(layout)
-        self.add_widget(self.sv)
+    def show_bubble(self):
+        if self.bb in self.children:
+            self.remove_widget(self.bb)
+        else:
+            self.add_widget(self.bb)
+        # self.lo.add_widget(Label(text='TEST', font_size='25sp'))
 
     def goto_main(self):
         self.manager.current = 'main'
@@ -273,23 +263,27 @@ class ExperimentScreen(Screen):
     def save_arecord(self):
         conn = sqlite3.connect(db_filepath)
         curs = conn.cursor()
-        curs.execute(sql_update_arecord, (datetime.now(), self.purpose, self.principle, self.equipment,
-                                          self.step, self.result, self.discussion, self.record_id))
+        curs.execute(sql_update_arecord, (self.purpose.text, self.principle.text, self.equipment.text,
+                                          self.steps.text, self.result.text, self.discussion.text, self.record_id))
         conn.commit()
         conn.close()
+        Clock.schedule_once(self.manager.get_screen('records').show_records)
         self.manager.current = 'records'
-
-
-class MyScreenManager(ScreenManager):
-    pass
 
 
 class MicroApp(App):
     def build(self):
         # Kivy supports only 1 window per application
-        Window.size = (360, 792)
+        # my HUAWEI mate 40E size is (1080, 2264)
+        Window.size = (360, 720)
         self.title = 'micro-GCFP'
-        return
+        sm = ScreenManager(transition=NoTransition())
+        sm.add_widget(MainScreen(name='main'))
+        sm.add_widget(RecordsScreen(name='records'))
+        sm.add_widget(ARecordScreen(name='arecord'))
+        sm.add_widget(InformationScreen(name='information'))
+        sm.add_widget(ExperimentScreen(name='experiment'))
+        return sm
 
 
 if __name__ == '__main__':

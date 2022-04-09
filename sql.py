@@ -46,5 +46,5 @@ sql_disable_arecord = '''update record set enable = 0 where ID = ?'''
 
 sql_insert_arecord = '''insert into record(subject, object, method, researcher) values (?, ?, ?, ?)'''
 
-sql_update_arecord = '''update record set modify_time = ?, purpose = ?, principle = ?, equipment = ?, 
-                          step = ?, result = ?, discussion = ? where ID = ?'''
+sql_update_arecord = '''update record set modify_time = (datetime('now','localtime')), purpose = ?, principle = ?, 
+                          equipment = ?, step = ?, result = ?, discussion = ? where ID = ?'''

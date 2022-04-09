@@ -1,15 +1,16 @@
 #:kivy 2.1.0
 
 <LabelOfInformation@Label>
+#    font_name: msyh
     font_size: '18sp'
     size_hint_x: 0.3
 
 <TextInputOfInformation@TextInput>
-#    font_size: '16sp'
+    font_size: '16sp'
     multiline: False
     size_hint_x: 0.9
     size_hint_y: None
-    height: '30dp'
+    height: 30
 
 <AnchorLayoutOfInformation@AnchorLayout>
     anchor_x: 'center'
@@ -25,11 +26,11 @@
     AnchorLayout:
         anchor_y: 'top'
         BoxLayout:
-            size_hint_y: None
-            height: '30dp'
+            size_hint: None, None
+            size: 360, 30
             Label:
                 text: '实验信息'
-                font_name: msyhbd
+#                font_name: msyhbd
                 font_size: '20sp'
     AnchorLayout:
         anchor_x: 'left'
@@ -37,7 +38,7 @@
         Button:
             text: '<首页'
             size_hint: None, None
-            size: '60dp', '30dp'
+            size: 60, 30
 #            font_name: msyh
             font_size: '20sp'
             color: 0, 0, 1
@@ -76,7 +77,8 @@
                 TextInputOfInformation:
                     id: object_input
                     text: 'scientific name'
-                    font_name: timesi
+#                    font_name: timesi
+#                    font_style: 'italic'
                     on_text_validate: root.vali_object()
             LabelOfInformation:
                 text: '实验人员'
@@ -90,13 +92,14 @@
                     id: method_spinner
                     size_hint_x: 0.9
                     size_hint_y: None
-                    height: '30dp'
+                    height: 30
                     text: '点击选择'
                     values: '比浊法', '计数法', '菌丝测长法'
+#                    on_text: print(self.text)
     Button:
         text: '开始记录'
         size_hint: 0.5, None
-        height: '60dp'
+        height: 60
         pos_hint: {'x': 0.25, 'y': 0.2}
         font_size: '20sp'
         background_color: 0, 0.749, 1, 1
