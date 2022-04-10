@@ -1,4 +1,11 @@
 #:kivy 2.1.0
+#:import Factory kivy.factory.Factory
+
+# Don’t try to add popup as a child to any other widget.
+# Or it won’t be created hidden in the background.
+# BUT who cares, it can implement my requirements!!!!!!
+#<PopupOfTable@Popup>:
+
 <LabelOfExperiment@Label>
     font_size: '16sp'
     size_hint_x: 0.1
@@ -9,7 +16,7 @@
     size_hint_y: None
 
 <ButtonOfExperiment@Button>
-    font_size: '12sp'
+    font_size: '13sp'
     background_color: 0, 0.749, 1, 0.5
 
 <ExperimentScreen>:
@@ -21,7 +28,17 @@
     result: result_input
     discussion: discussion_input
     lo: mylo
+    # reference mybb like this to avoid weakref
+    # never use = in .kv file, or it does not show its error, just collapse
     bb: mybb.__self__
+    pt: mypt
+    pc: mypc
+    spt: myspt
+    spc: myspc
+    table_title: tt_input
+    chart_title: ct_input
+    table_rows: tr_input
+    table_cols: tc_input
     AnchorLayout:
         anchor_y: 'top'
         BoxLayout:
@@ -114,7 +131,102 @@
         center_y: root.height / 12
         ButtonOfExperiment:
             text: '创建表格'
+#            on_release: Factory.PopupOfTable().open()
+            on_release: root.show_table_popup()
         ButtonOfExperiment:
             text: '表格绘图'
+            on_release: root.show_chart_popup()
         ButtonOfExperiment:
-            text: '上传图片'
+            text: '删除表图'
+    Popup:
+        id: mypt
+        title: '- operation -'
+        title_align: 'center'
+        size_hint: 0.8, 0.4
+        pos_hint: {'right': 0.9, 'top': 0.7}
+        BoxLayout:
+            orientation: 'vertical'
+            GridLayout:
+                cols: 2
+                spacing: '10dp'
+                Label:
+                    text: '章节'
+                Spinner:
+                    id: myspt
+                    text: '点击选择'
+                    values: ['目的', '原理', '材料', '步骤', '结果', '讨论']
+                    size_hint_x: None
+                    width: root.width / 2
+                Label:
+                    text: '标题'
+                TextInput:
+                    id: tt_input
+                    multiline: False
+            BoxLayout:
+                padding: '10dp'
+                spacing: '10dp'
+                Label:
+                    text: '行数'
+                TextInput:
+                    id: tr_input
+                    multiline: False
+                    size_hint_y: 0.6
+                    pos_hint: {'y': 0.2}
+                Label:
+                    text: '列数'
+                TextInput:
+                    id: tc_input
+                    multiline: False
+                    size_hint_y: 0.6
+                    pos_hint: {'y': 0.2}
+            GridLayout:
+                cols: 2
+                padding: '10dp'
+                spacing: '10dp'
+                Button:
+                    text: '创建'
+                    background_color: 0, 0.749, 1, 1
+                    on_release: root.add_table()
+                Button:
+                    text: '取消'
+                    background_color: 0, 0.749, 1, 1
+                    on_release: root.show_table_popup()
+    Popup:
+        id: mypc
+        title: '- operation -'
+        title_align: 'center'
+        size_hint: 0.8, 0.4
+        pos_hint: {'right': 0.9, 'top': 0.7}
+        BoxLayout:
+            orientation: 'vertical'
+            GridLayout:
+                cols: 2
+                spacing: '10dp'
+                size_hint_y: None
+                height: '60dp'
+                Label:
+                    text: '章节'
+                Spinner:
+                    id: myspc
+                    text: '点击选择'
+                    values: ['目的', '原理', '材料', '步骤', '结果', '讨论']
+                    size_hint_x: None
+                    width: root.width / 2
+                Label:
+                    text: '标题'
+                TextInput:
+                    id: ct_input
+                    multiline: False
+            GridLayout:
+                cols: 2
+                padding: '10dp'
+                spacing: '10dp'
+                size_hint_y: 0.3
+                Button:
+                    text: '创建'
+                    background_color: 0, 0.749, 1, 1
+                    on_release: root.add_chart()
+                Button:
+                    text: '取消'
+                    background_color: 0, 0.749, 1, 1
+                    on_release: root.show_chart_popup()
