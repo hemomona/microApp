@@ -12,17 +12,26 @@
               directory "discard" places codes what I test,
               directory "font" is used to replace default font. can not modify config.py of kivy in my ubuntu18,
               directory "pics" places pictures embedded in the app.
+              table_store.put(k, data=l, row=v[1], col=v[2], section=v[3])
+              chart_store.put(k, path=v[1], section=v[2])
 """
 import os
+import re
 import sqlite3
 import logging.config
 from collections import deque
 
+import numpy as np
+import matplotlib as mpl
+from matplotlib import pyplot as plt
+from scipy import interpolate
+
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.metrics import dp
-from kivy.properties import ObjectProperty, NumericProperty, StringProperty
+from kivy.properties import ObjectProperty, NumericProperty
 from kivy.resources import resource_add_path
+from kivy.core.image import Image
 from kivy.core.text import LabelBase
 from kivy.core.window import Window
 from kivy.lang import Builder
@@ -42,9 +51,14 @@ from plyer import email, storagepath, uniqueid
 from sql import sql_create_table, sql_select_example, sql_insert_example, sql_select_records, sql_disable_arecord, \
     sql_insert_arecord, sql_update_arecord
 
-# replace default font
+# replace default font of kivy to display Chinese
 resource_add_path(os.path.abspath('./font'))
 LabelBase.register('Roboto', 'MSYH.TTC')
+
+# replace default font of matplotlib to display Chinese
+mpl.rcParams['font.family'] = 'SimHei'
+plt.rcParams['axes.unicode_minus'] = False
+plt.style.use('ggplot')
 
 # basic info here
 app_version = '1.0.1'
@@ -217,22 +231,26 @@ class InformationScreen(Screen):
 
     def start_record(self):
         if self.subject.text == '' or self.object.text == '' or self.researcher.text == '':
-            popup = Popup(title='× error ×', title_align='center', size_hint=(0.4, 0.2), content=Label(text='包含空字符串！'))
+            popup = Popup(title='× error ×', title_align='center', size_hint=(0.4, 0.2),
+                          content=Label(text='包含空字符串！'))
             popup.open()
         elif self.method.text not in self.method.values:
-            popup = Popup(title='× error ×', title_align='center', size_hint=(0.4, 0.2), content=Label(text='未选实验方法！'))
+            popup = Popup(title='× error ×', title_align='center', size_hint=(0.4, 0.2),
+                          content=Label(text='未选实验方法！'))
             popup.open()
         elif self.vali_subject() and self.vali_object():
             conn = sqlite3.connect(db_filepath)
             conn.text_factory = str
             curs = conn.cursor()
-            curs.execute(sql_insert_arecord, (self.subject.text, self.object.text, self.method.text, self.researcher.text))
+            curs.execute(sql_insert_arecord,
+                         (self.subject.text, self.object.text, self.method.text, self.researcher.text))
             self.insert_record_id = curs.lastrowid
             conn.commit()
             conn.close()
             self.goto_experiment()
         else:
-            popup = Popup(title='× error ×', title_align='center', size_hint=(0.4, 0.2), content=Label(text='预期外的错误！'))
+            popup = Popup(title='× error ×', title_align='center', size_hint=(0.4, 0.2),
+                          content=Label(text='预期外的错误！'))
             popup.open()
 
     def goto_main(self):
@@ -256,19 +274,33 @@ class ExperimentScreen(Screen):
     bb = Bubble()                                       # Bubble usually is hidden
     pt = Popup()                                        # Popup of table-create
     pc = Popup()                                        # Popup of chart-create
+    pd = Popup()                                        # Popup of delete widget
     spt = ObjectProperty()                              # Spinner of table-create popup
-    spc = ObjectProperty()                              # Spinner of chart-create popup
+    spc = ObjectProperty()                              # Spinner of data reference in chart-create popup
+    spdt = ObjectProperty()                             # Spinner of delete table popup
+    spdc = ObjectProperty()                             # Spinner of delete chart popup
+    spcs = ObjectProperty()                             # Spinner of section in chart-create popup
+    spci = ObjectProperty()                             # Spinner of interpolation in chart-create popup
     table_title = ObjectProperty()
-    chart_title = ObjectProperty()
     table_rows = ObjectProperty()
     table_cols = ObjectProperty()
-    tables = {}                                         # (title-section, table instance)
+    # in the _table.json storage, it is title: {data, row, col, section}
+    tables = {}                                         # (title, [table instance, row, col, section])
+    chart_title = ObjectProperty()
+    chart_rows = ObjectProperty()
+    chart_cols = ObjectProperty()
+    chart_xaxis = ObjectProperty()
+    chart_xlabel = ObjectProperty()
+    chart_ylabel = ObjectProperty()
+    # in the _picture.json storage, it is title: {data, row, col, section}
+    charts = {}                                         # (title, [chart instance, filepath, section])
 
     def __init__(self, **kwargs):
         super(ExperimentScreen, self).__init__(**kwargs)
         self.remove_widget(self.bb)
         self.remove_widget(self.pt)
         self.remove_widget(self.pc)
+        self.remove_widget(self.pd)
 
     def show_bubble(self):
         if self.bb in self.children:
@@ -287,26 +319,41 @@ class ExperimentScreen(Screen):
         if self.pc in self.children:
             self.remove_widget(self.pc)
         else:
+            table_store = JsonStore(data_path + str(self.record_id) + '_table.json')
+            self.spc.values = table_store.keys()
             self.remove_widget(self.bb)
             self.add_widget(self.pc)
 
+    def show_dele_popup(self):
+        if self.pd in self.children:
+            self.remove_widget(self.pd)
+        else:
+            self.spdt.values = self.tables.keys()
+            self.spdc.values = self.charts.keys()
+            self.remove_widget(self.bb)
+            self.add_widget(self.pd)
+
     def save_arecord(self):
         self.save_tables()
+        self.save_charts()
         conn = sqlite3.connect(db_filepath)
         curs = conn.cursor()
         curs.execute(sql_update_arecord, (self.purpose.text, self.principle.text, self.equipment.text,
                                           self.steps.text, self.result.text, self.discussion.text, self.record_id))
         conn.commit()
         conn.close()
-        Clock.schedule_once(self.manager.get_screen('records').show_records)
-        Popup(title='~ information ~', title_align='center', size_hint=(0.4, 0.2), content=Label(text='保存成功')).open()
+        # Clock.schedule_once(self.manager.get_screen('records').show_records)
+        Popup(title='~ information ~', title_align='center', size_hint=(0.4, 0.2),
+              content=Label(text='保存成功！')).open()
 
     def add_table(self):
         table_store = JsonStore(data_path + str(self.record_id) + '_table.json')
-        if self.sp.text not in self.sp.values:
-            self.sp.is_open = True
+        if self.spt.text not in self.spt.values:
+            self.spt.is_open = True
         elif table_store.exists(self.table_title.text):
-            self.table_title.text = '此表格已存在！'
+            Popup(title='× error ×', title_align='center', size_hint=(0.6, 0.2),
+                  content=Label(text='此表格已存在！')).open()
+            self.table_title.text = ''
         elif not self.table_rows.text.isdigit():
             self.table_rows.text = ''
         elif not self.table_cols.text.isdigit():
@@ -316,13 +363,13 @@ class ExperimentScreen(Screen):
             rownum = int(self.table_rows.text)
             colnum = int(self.table_cols.text)
             table = BoxLayout(orientation='vertical', size_hint_y=None, height=dp(20*rownum+30))
-            table.add_widget(Label(text=title + '-' + self.sp.text))
+            table.add_widget(Label(text=title + '-' + self.spt.text))
             for r in range(rownum):
                 row = GridLayout(cols=colnum)
                 for c in range(int(colnum)):
-                    row.add_widget(TextInput(font_size='12sp'))
+                    row.add_widget(TextInput(font_size='12sp', multiline=False))
                 table.add_widget(row)
-            self.tables[title+'-'+self.sp.text] = table
+            self.tables[title] = [table, rownum, colnum, self.spt.text]
             self.lo.add_widget(table)
             self.table_title.text = ''
             self.table_rows.text = ''
@@ -335,15 +382,179 @@ class ExperimentScreen(Screen):
         for k, v in self.tables.items():                # access every table
             # !!!!!!!the data in a table is reversed AND reverse() returns None!!!!!!!
             l = []
-            i = k.rfind('-')
-            for r in v.children:                        # access every row
+            # i = k.rfind('-')
+            for r in v[0].children:                     # access every row
                 for ti in r.children:                   # access every cell
                     l.append(ti.text)
             l.reverse()
-            table_store.put(k[:i], data=l, section=k[i+1:])
+            table_store.put(k, data=l, row=v[1], col=v[2], section=v[3])
 
     def add_chart(self):
-        print('todo')
+        chart_store = JsonStore(data_path + str(self.record_id) + '_chart.json')
+        if not self.spc.values:                         # spc.values is False when it contains nothing
+            Popup(title='× error ×', title_align='center', size_hint=(0.6, 0.2),
+                  content=Label(text='需要先行添加表格并且保存！')).open()
+            self.remove_widget(self.pc)
+        elif self.spc.text not in self.spc.values:
+            self.spc.is_open = True
+        elif self.spcs.text not in self.spcs.values:
+            self.spcs.is_open = True
+        elif self.spci.text not in self.spci.values:
+            self.spci.is_open = True
+        elif chart_store.exists(self.chart_title.text):
+            Popup(title='× error ×', title_align='center', size_hint=(0.6, 0.2),
+                  content=Label(text='此图片已存在！')).open()
+            self.table_title.text = ''
+        elif self.chart_rows.text and self.chart_cols.text:
+            Popup(title='× error ×', title_align='center', size_hint=(0.6, 0.2),
+                  content=Label(text='不支持同时输入行号和列号！')).open()
+            self.chart_rows.text = ''
+            self.chart_cols.text = ''
+        else:
+            table_store = JsonStore(data_path + str(self.record_id) + '_table.json')
+            table = table_store.get(self.spc.text)
+            table_data = table['data']
+            table_row = table['row']
+            table_col = table['col']
+            title = self.chart_title.text
+            x = []
+            y = []
+            illegal = False                               # if the data is illegal
+            illegal_reason = ''
+            if self.chart_rows.text:                      # access rows
+                if self.chart_xaxis.text:                 # access the x values user inputed
+                    xaxis = re.sub('[^0-9^,.]', '', self.chart_xaxis.text)       # only save number, ,, ..
+                    xaxl = xaxis.split(',')
+                    if len(xaxl) != table_col - 1:        # -1 because of excluding 1st col
+                        illegal = True
+                        illegal_reason = 'x值个数错误！'
+                    else:
+                        for xa in xaxl:
+                            try:
+                                x.append(float(xa))
+                            except ValueError:
+                                illegal = True
+                                illegal_reason = 'x值包含非数字内容！'
+                                break
+                else:
+                    for i in range(1, table_col):         # +1 because of excluding 1st col
+                        try:
+                            x.append(float(table_data[i]))
+                        except ValueError:
+                            illegal = True
+                            illegal_reason = '默认x值包含非数字内容！'
+                            break
+
+                if not illegal:
+                    rows = self.chart_rows.text
+                    rows = re.sub('[^0-9^,]', '', rows)    # only save number, ,.
+                    for row in rows.split(','):
+                        r = int(row)
+                        if r > table_row:
+                            illegal = True
+                            illegal_reason = row + '超出最大行数！'
+                            break
+                        l = []
+                        for i in range(table_col*(r-1)+1, table_col*r):    # +1 because of excluding 1st col
+                            try:
+                                l.append(float(table_data[i]))
+                            except ValueError:
+                                illegal = True
+                                illegal_reason = row + '行单元格包含非数字内容！'
+                                break
+                        if illegal:
+                            break
+                        y.append(l)
+            else:                                           # access cols
+                if self.chart_xaxis.text:
+                    xaxis = re.sub('[^0-9^,.]', '', self.chart_xaxis.text)       # only save number, ,, ..
+                    xaxl = xaxis.split(',')
+                    if len(xaxl) != table_row - 1:          # -1 because of excluding 1st row
+                        illegal = True
+                        illegal_reason = 'x值个数错误！'
+                    else:
+                        for xa in xaxl:
+                            try:
+                                x.append(float(xa))
+                            except ValueError:
+                                illegal = True
+                                illegal_reason = 'x值包含非数字内容！'
+                                break
+                else:
+                    # +table_col at 1st place of range because of excluding 1st row
+                    for i in range(table_col, table_row*table_col, table_col):
+                        try:
+                            x.append(float(table_data[i]))
+                        except ValueError:
+                            illegal = True
+                            illegal_reason = '默认x值包含非数字内容！'
+                            break
+
+                if not illegal:
+                    cols = self.chart_cols.text
+                    cols = re.sub('[^0-9^,]', '', cols)
+                    for col in cols.split(','):
+                        c = int(col)
+                        if c > table_col:
+                            illegal = True
+                            illegal_reason = col + '超出最大列数！'
+                            break
+                        l = []
+                        # +table_col at 1st place of range because of excluding 1st row
+                        for i in range(c-1+table_col, table_row*table_col+c-1, table_col):
+                            try:
+                                l.append(float(table_data[i]))
+                            except ValueError:
+                                illegal = True
+                                illegal_reason = col + '列单元格包含非数字内容！'
+                                break
+                        if illegal:
+                            break
+                        y.append(l)
+
+            if illegal:
+                Popup(title='× error ×', title_align='center', size_hint=(0.6, 0.2),
+                      content=Label(text=illegal_reason)).open()
+            else:
+                plt.figure()
+                plt.title(title)
+                plt.xlabel(self.chart_xlabel.text)
+                plt.ylabel(self.chart_ylabel.text)
+                x = np.array(x)
+                x_smooth = np.linspace(x.min(), x.max(), 300)
+                for ay in y:
+                    ay = np.array(ay)
+                    ay_smooth = interpolate.interp1d(x, ay, kind=self.spci.text)(x_smooth)
+                    plt.plot(x_smooth, ay_smooth)
+                plt.legend()
+                imgpath = data_path + str(self.record_id) + '_' + title + '.png'
+                plt.savefig(imgpath)
+                chart = BoxLayout(orientation='vertical')
+                chart.add_widget(Label(text=title + '-' + self.spcs.text))
+                chart.add_widget(Image(source=imgpath))
+                self.charts[title] = [chart, imgpath, self.spcs.text]
+                self.lo.add_widget(chart)
+                self.remove_widget(self.pc)
+
+    def save_charts(self):
+        chart_store = JsonStore(data_path + str(self.record_id) + '_chart.json')
+        for k, v in self.charts.items():
+            chart_store.put(k, path=v[1], section=v[2])
+
+    def dele_widget(self):
+        table_store = JsonStore(data_path + str(self.record_id) + '_table.json')
+        chart_store = JsonStore(data_path + str(self.record_id) + '_chart.json')
+        if self.spdt.text in self.spdt.values:
+            removed_table = self.tables.pop(self.spdt.text)
+            self.lo.remove_widget(removed_table[0])
+            if table_store.exists(self.spdt.text):
+                table_store.delete(self.spdt.text)
+        if self.spdc.text in self.spdc.values:
+            removed_chart = self.charts.pop(self.spdc.text)
+            self.lo.remove_widget(removed_chart[0])
+            if chart_store.exists(self.spdc.text):
+                chart_store.delete(self.spdc.text)
+        self.remove_widget(self.pd)
 
     def goto_main(self):
         self.manager.current = 'main'
