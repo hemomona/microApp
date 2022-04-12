@@ -32,9 +32,9 @@
     # reference mybb like this to avoid weakref
     # never use = in .kv file, or it does not show its error, just collapse
     bb: mybb.__self__
-    pt: mypt
-    pc: mypc
-    pd: mypd
+    pt: mypt.__self__
+    pc: mypc.__self__
+    pd: mypd.__self__
     spt: myspt
     spc: myspc
     spdt: myspdt

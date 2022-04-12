@@ -31,7 +31,7 @@ from kivy.clock import Clock
 from kivy.metrics import dp
 from kivy.properties import ObjectProperty, NumericProperty
 from kivy.resources import resource_add_path
-from kivy.core.image import Image
+from kivy.uix.image import Image  # !!!!it should be this, not kivy.uix.image!!!!
 from kivy.core.text import LabelBase
 from kivy.core.window import Window
 from kivy.lang import Builder
@@ -303,6 +303,7 @@ class ExperimentScreen(Screen):
         if self.pc in self.children:
             self.remove_widget(self.pc)
         else:
+            # the following 2 lines for test
             # table_store = JsonStore(data_path + str(self.record_id) + '_table.json')
             # self.spc.values = table_store.keys()
             self.spc.values = self.tables.keys()
@@ -378,7 +379,7 @@ class ExperimentScreen(Screen):
         chart_store = JsonStore(data_path + str(self.record_id) + '_chart.json')
         if not self.spc.values:                         # spc.values is False when it contains nothing
             Popup(title='× error ×', title_align='center', size_hint=(0.6, 0.2),
-                  content=Label(text='需要先行添加表格并且保存！')).open()
+                  content=Label(text='需要先添加表格！')).open()
             self.remove_widget(self.pc)
         elif self.spc.text not in self.spc.values:
             self.spc.is_open = True
@@ -386,6 +387,9 @@ class ExperimentScreen(Screen):
             self.spcs.is_open = True
         elif self.spci.text not in self.spci.values:
             self.spci.is_open = True
+        elif not self.chart_title.text:
+            Popup(title='× error ×', title_align='center', size_hint=(0.6, 0.2),
+                  content=Label(text='填写图片标题！')).open()
         elif chart_store.exists(self.chart_title.text):
             Popup(title='× error ×', title_align='center', size_hint=(0.6, 0.2),
                   content=Label(text='此图片已存在！')).open()
@@ -395,6 +399,9 @@ class ExperimentScreen(Screen):
                   content=Label(text='不支持同时输入行号和列号！')).open()
             self.chart_rows.text = ''
             self.chart_cols.text = ''
+        elif not (self.chart_rows.text or self.chart_cols.text):
+            Popup(title='× error ×', title_align='center', size_hint=(0.6, 0.2),
+                  content=Label(text='输入行号或列号！')).open()
         else:
             table_store = JsonStore(data_path + str(self.record_id) + '_table.json')
             table = table_store.get(self.spc.text)
@@ -410,7 +417,8 @@ class ExperimentScreen(Screen):
             if self.chart_rows.text:                      # access rows
                 if self.chart_xaxis.text:                 # access the x values user inputed
                     xaxis = re.sub('[^0-9^,.]', '', self.chart_xaxis.text)       # only save number, ,, ..
-                    xaxl = xaxis.split(',')
+                    # xaxl = xaxis.split(',')                                      # this way causes null string
+                    xaxl = list(filter(None, xaxis.split(',')))
                     if len(xaxl) != table_col - 1:        # -1 because of excluding 1st col
                         illegal = True
                         illegal_reason = 'x值个数错误！'
@@ -434,7 +442,8 @@ class ExperimentScreen(Screen):
                 if not illegal:
                     rows = self.chart_rows.text
                     rows = re.sub('[^0-9^,]', '', rows)    # only save number, ,.
-                    for row in rows.split(','):
+                    rows = list(filter(None, rows.split(',')))
+                    for row in rows:
                         r = int(row)
                         if r > table_row:
                             illegal = True
@@ -455,7 +464,7 @@ class ExperimentScreen(Screen):
             else:                                           # access cols
                 if self.chart_xaxis.text:
                     xaxis = re.sub('[^0-9^,.]', '', self.chart_xaxis.text)       # only save number, ,, ..
-                    xaxl = xaxis.split(',')
+                    xaxl = list(filter(None, xaxis.split(',')))
                     if len(xaxl) != table_row - 1:          # -1 because of excluding 1st row
                         illegal = True
                         illegal_reason = 'x值个数错误！'
@@ -480,7 +489,8 @@ class ExperimentScreen(Screen):
                 if not illegal:
                     cols = self.chart_cols.text
                     cols = re.sub('[^0-9^,]', '', cols)
-                    for col in cols.split(','):
+                    cols = list(filter(None, cols.split(',')))
+                    for col in cols:
                         c = int(col)
                         if c > table_col:
                             illegal = True
@@ -517,10 +527,10 @@ class ExperimentScreen(Screen):
                 plt.legend(ll)
                 imgpath = data_path + str(self.record_id) + '_' + title + '.png'
                 plt.savefig(imgpath)
-                chart = BoxLayout(orientation='vertical')
+                chart = BoxLayout(orientation='vertical', size_hint_y=None, height='270dp')
                 chart.add_widget(Label(text=title + '-' + self.spcs.text))
-                # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BUG here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                chart.add_widget(Image(source=imgpath, allow_stretch=True, size_hint=(None, None), size=('360dp', '240dp')))
+                chart.add_widget(Image(source=imgpath, allow_stretch=True,
+                                       size_hint=(None, None), size=('320dp', '240dp')))
                 self.charts[title] = [chart, imgpath, self.spcs.text]
                 self.lo.add_widget(chart)
                 self.remove_widget(self.pc)
@@ -601,6 +611,7 @@ class ARecordScreen(Screen):
             ti.bind(minimum_height=ti.setter('height'))
             self.lo.add_widget(Label(text=self.sections[secpart], size_hint_x=0.1, pos_hint={'right': 0.2}))
             self.lo.add_widget(ti)
+
             table_store = JsonStore(data_path + str(self.record_id) + '_table.json')
             for k, v in table_store.find(section=self.sections[secpart]):
                 self.lo.add_widget(Label(text=k))
@@ -609,6 +620,13 @@ class ARecordScreen(Screen):
                     grid.add_widget(TextInput(text=d, font_size='12sp', multiline=False))
                 self.lo.add_widget(grid)
                 self.tables[k] = [grid, v['row'], v['col'], v['section']]
+
+            chart_store = JsonStore(data_path + str(self.record_id) + '_chart.json')
+            for k, v in chart_store.find(section=self.sections[secpart]):
+                self.lo.add_widget(Label(text=k))
+                img = Image(source=v['path'], size_hint_y=None, height='270dp')
+                self.lo.add_widget(img)
+                self.charts[k] = [img, v['path'], v['section']]
         conn.commit()
         conn.close()
 
@@ -646,6 +664,9 @@ class ARecordScreen(Screen):
         table_store = JsonStore(data_path + str(self.record_id) + '_table.json')
         if self.spt.text not in self.spt.values:
             self.spt.is_open = True
+        elif not self.table_title.text:
+            Popup(title='× error ×', title_align='center', size_hint=(0.6, 0.2),
+                  content=Label(text='填写表格标题！')).open()
         elif table_store.exists(self.table_title.text):
             Popup(title='× error ×', title_align='center', size_hint=(0.6, 0.2),
                   content=Label(text='此表格已存在！')).open()
@@ -678,6 +699,170 @@ class ARecordScreen(Screen):
             l.reverse()
             table_store.put(k, data=l, row=v[1], col=v[2], section=v[3])
 
+    def add_chart(self):
+        chart_store = JsonStore(data_path + str(self.record_id) + '_chart.json')
+        if not self.spc.values:                         # spc.values is False when it contains nothing
+            Popup(title='× error ×', title_align='center', size_hint=(0.6, 0.2),
+                  content=Label(text='需要先添加表格！')).open()
+            self.remove_widget(self.pc)
+        elif self.spc.text not in self.spc.values:
+            self.spc.is_open = True
+        elif self.spcs.text not in self.spcs.values:
+            self.spcs.is_open = True
+        elif self.spci.text not in self.spci.values:
+            self.spci.is_open = True
+        elif not self.chart_title.text:
+            Popup(title='× error ×', title_align='center', size_hint=(0.6, 0.2),
+                  content=Label(text='填写图片标题！')).open()
+        elif chart_store.exists(self.chart_title.text):
+            Popup(title='× error ×', title_align='center', size_hint=(0.6, 0.2),
+                  content=Label(text='此图片已存在！')).open()
+            self.table_title.text = ''
+        elif self.chart_rows.text and self.chart_cols.text:
+            Popup(title='× error ×', title_align='center', size_hint=(0.6, 0.2),
+                  content=Label(text='不支持同时输入行号和列号！')).open()
+            self.chart_rows.text = ''
+            self.chart_cols.text = ''
+        elif not (self.chart_rows.text or self.chart_cols.text):
+            Popup(title='× error ×', title_align='center', size_hint=(0.6, 0.2),
+                  content=Label(text='输入行号或列号！')).open()
+        else:
+            table_store = JsonStore(data_path + str(self.record_id) + '_table.json')
+            table = table_store.get(self.spc.text)
+            table_data = table['data']
+            table_row = table['row']
+            table_col = table['col']
+            title = self.chart_title.text
+            x = []
+            y = []
+            ll = []                                       # legend labels
+            illegal = False                               # if the data is illegal
+            illegal_reason = ''
+            if self.chart_rows.text:                      # access rows
+                if self.chart_xaxis.text:                 # access the x values user inputed
+                    xaxis = re.sub('[^0-9^,.]', '', self.chart_xaxis.text)       # only save number, ,, ..
+                    xaxl = list(filter(None, xaxis.split(',')))
+                    if len(xaxl) != table_col - 1:        # -1 because of excluding 1st col
+                        illegal = True
+                        illegal_reason = 'x值个数错误！'
+                    else:
+                        for xa in xaxl:
+                            try:
+                                x.append(float(xa))
+                            except ValueError:
+                                illegal = True
+                                illegal_reason = 'x值包含非数字内容！'
+                                break
+                else:
+                    for i in range(1, table_col):         # +1 because of excluding 1st col
+                        try:
+                            x.append(float(table_data[i]))
+                        except ValueError:
+                            illegal = True
+                            illegal_reason = '默认x值包含非数字内容！'
+                            break
+
+                if not illegal:
+                    rows = self.chart_rows.text
+                    rows = re.sub('[^0-9^,]', '', rows)    # only save number, ,.
+                    rows = list(filter(None, rows.split(',')))
+                    for row in rows:
+                        r = int(row)
+                        if r > table_row:
+                            illegal = True
+                            illegal_reason = row + '超出最大行数！'
+                            break
+                        l = []
+                        for i in range(table_col*(r-1)+1, table_col*r):    # +1 because of excluding 1st col
+                            try:
+                                l.append(float(table_data[i]))
+                            except ValueError:
+                                illegal = True
+                                illegal_reason = row + '行单元格包含非数字内容！'
+                                break
+                        if illegal:
+                            break
+                        y.append(l)
+                        ll.append(row)
+            else:                                           # access cols
+                if self.chart_xaxis.text:
+                    xaxis = re.sub('[^0-9^,.]', '', self.chart_xaxis.text)       # only save number, ,, ..
+                    xaxl = list(filter(None, xaxis.split(',')))
+                    if len(xaxl) != table_row - 1:          # -1 because of excluding 1st row
+                        illegal = True
+                        illegal_reason = 'x值个数错误！'
+                    else:
+                        for xa in xaxl:
+                            try:
+                                x.append(float(xa))
+                            except ValueError:
+                                illegal = True
+                                illegal_reason = 'x值包含非数字内容！'
+                                break
+                else:
+                    # +table_col at 1st place of range because of excluding 1st row
+                    for i in range(table_col, table_row*table_col, table_col):
+                        try:
+                            x.append(float(table_data[i]))
+                        except ValueError:
+                            illegal = True
+                            illegal_reason = '默认x值包含非数字内容！'
+                            break
+
+                if not illegal:
+                    cols = self.chart_cols.text
+                    cols = re.sub('[^0-9^,]', '', cols)
+                    cols = list(filter(None, cols.split(',')))
+                    for col in cols:
+                        c = int(col)
+                        if c > table_col:
+                            illegal = True
+                            illegal_reason = col + '超出最大列数！'
+                            break
+                        l = []
+                        # +table_col at 1st place of range because of excluding 1st row
+                        for i in range(c-1+table_col, table_row*table_col+c-1, table_col):
+                            try:
+                                l.append(float(table_data[i]))
+                            except ValueError:
+                                illegal = True
+                                illegal_reason = col + '列单元格包含非数字内容！'
+                                break
+                        if illegal:
+                            break
+                        y.append(l)
+                        ll.append(col)
+
+            if illegal:
+                Popup(title='× error ×', title_align='center', size_hint=(0.6, 0.2),
+                      content=Label(text=illegal_reason)).open()
+            else:
+                plt.figure()
+                plt.title(title)
+                plt.xlabel(self.chart_xlabel.text)
+                plt.ylabel(self.chart_ylabel.text)
+                x = np.array(x)
+                x_smooth = np.linspace(x.min(), x.max(), 300)
+                for ay in y:
+                    ay = np.array(ay)
+                    ay_smooth = interpolate.interp1d(x, ay, kind=self.spci.text)(x_smooth)
+                    plt.plot(x_smooth, ay_smooth)
+                plt.legend(ll)
+                imgpath = data_path + str(self.record_id) + '_' + title + '.png'
+                plt.savefig(imgpath)
+                chart = BoxLayout(orientation='vertical', size_hint_y=None, height='270dp')
+                chart.add_widget(Label(text=title + '-' + self.spcs.text))
+                chart.add_widget(Image(source=imgpath, allow_stretch=True,
+                                       size_hint=(None, None), size=('320dp', '240dp')))
+                self.charts[title] = [chart, imgpath, self.spcs.text]
+                self.lo.add_widget(chart)
+                self.remove_widget(self.pc)
+
+    def save_charts(self):
+        chart_store = JsonStore(data_path + str(self.record_id) + '_chart.json')
+        for k, v in self.charts.items():
+            chart_store.put(k, path=v[1], section=v[2])
+
     def dele_widget(self):
         table_store = JsonStore(data_path + str(self.record_id) + '_table.json')
         chart_store = JsonStore(data_path + str(self.record_id) + '_chart.json')
@@ -698,6 +883,7 @@ class ARecordScreen(Screen):
 
     def save_arecord(self):
         self.save_tables()
+        self.save_charts()
         record = []
         for ti in self.lo.children:
             if isinstance(ti, TextInput):
@@ -727,7 +913,7 @@ class MicroApp(App):
         sm.add_widget(ARecordScreen(name='arecord'))
         sm.add_widget(InformationScreen(name='information'))
         sm.add_widget(ExperimentScreen(name='experiment'))
-        return ExperimentScreen()
+        return sm
 
 
 if __name__ == '__main__':
