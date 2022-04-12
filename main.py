@@ -61,7 +61,7 @@ plt.rcParams['axes.unicode_minus'] = False
 plt.style.use('ggplot')
 
 # basic info here
-app_version = '1.0.1'
+app_version = '1.0.0'
 db_filepath = './records.db'
 log_filepath = './logging.log'
 # data directory places ID_table.json and ID_picture.json,
