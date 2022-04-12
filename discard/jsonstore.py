@@ -21,6 +21,8 @@ store.put('tshirtman', name='Gabriel', age=66)
 store.put('tito', name='Mathieu', age=30)
 store.put('tito', age=66)
 # get a value using a index key and key
+f = open('../data/1_图5.培养基5生长曲线.png')
+print(f.read())
 print(float('aa'))
 print('tito is', store.get('tito')['age'])
 for key, value in store.find(age=66):

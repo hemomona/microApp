@@ -28,32 +28,3 @@ Traceback (most recent call last):
   File "D:/code/microApp/main.py", line 80, in goto_feedback
     '����: \n\n\n��־��Ϣ: ' + log_info,
 TypeError: can only concatenate str (not "list") to str
-2022-04-11 20:33:52,696 - mylog - ERROR     - main.py  : 556 line - __init__() missing 1 required positional argument: 'arg'
-Traceback (most recent call last):
-  File "D:/code/microApp/main.py", line 554, in <module>
-    MicroApp().run()
-  File "D:\code\microApp\venv\lib\site-packages\kivy\app.py", line 955, in run
-    runTouchApp()
-  File "D:\code\microApp\venv\lib\site-packages\kivy\base.py", line 574, in runTouchApp
-    EventLoop.mainloop()
-  File "D:\code\microApp\venv\lib\site-packages\kivy\base.py", line 339, in mainloop
-    self.idle()
-  File "D:\code\microApp\venv\lib\site-packages\kivy\base.py", line 383, in idle
-    self.dispatch_input()
-  File "D:\code\microApp\venv\lib\site-packages\kivy\base.py", line 334, in dispatch_input
-    post_dispatch_input(*pop(0))
-  File "D:\code\microApp\venv\lib\site-packages\kivy\base.py", line 302, in post_dispatch_input
-    wid.dispatch('on_touch_up', me)
-  File "kivy\_event.pyx", line 731, in kivy._event.EventDispatcher.dispatch
-  File "D:\code\microApp\venv\lib\site-packages\kivy\uix\behaviors\button.py", line 179, in on_touch_up
-    self.dispatch('on_release')
-  File "kivy\_event.pyx", line 727, in kivy._event.EventDispatcher.dispatch
-  File "kivy\_event.pyx", line 1307, in kivy._event.EventObservers.dispatch
-  File "kivy\_event.pyx", line 1191, in kivy._event.EventObservers._dispatch
-  File "D:\code\microApp\venv\lib\site-packages\kivy\lang\builder.py", line 55, in custom_callback
-    exec(__kvlang__.co_value, idmap)
-  File "D:\code\microApp\screenkv\experiment.kv", line 287, in <module>
-    on_release: root.add_chart()
-  File "D:/code/microApp/main.py", line 517, in add_chart
-    chart.add_widget(Image(source=imgpath))
-TypeError: __init__() missing 1 required positional argument: 'arg'

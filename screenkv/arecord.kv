@@ -1,6 +1,26 @@
 #:kivy 2.1.0
 
 <ARecordScreen>:
+    lo: mylo
+    bb: mybb.__self__
+    pt: mypt.__self__
+    pc: mypc.__self__
+    pd: mypd.__self__
+    spt: myspt
+    spc: myspc
+    spdt: myspdt
+    spdc: myspdc
+    spcs: myspcs
+    spci: myspci
+    table_title: tt_input
+    table_rows: tr_input
+    table_cols: tc_input
+    chart_title: ct_input
+    chart_rows: cr_input
+    chart_cols: cc_input
+    chart_xaxis: cx_input
+    chart_xlabel: cxl_input
+    chart_ylabel: cyl_input
     name: "arecord"
     AnchorLayout:
         anchor_y: 'top'
@@ -35,5 +55,221 @@
             background_normal: ''
             background_color: 0, 0, 0, 0
             on_release: root.save_arecord()
-    Label:
-        text: str(root.record_id)
+    ScrollView:
+        size_hint_y: 0.95
+        BoxLayout:
+            id: mylo
+            orientation: 'vertical'
+            padding: '20dp'
+            spacing: '20dp'
+            size_hint_y: None
+            height: self.minimum_height
+    FloatLayout:
+        Button:
+            text: '+'
+            valign: 'center'
+            font_size: '30sp'
+            size_hint: None, None
+            size: '30dp', '30dp'
+            center: root.width * 3/4, root.height / 12
+            background_color: 0, 0.749, 1, 1
+            on_release: root.show_bubble()
+    Bubble:
+        id: mybb
+        orientation: 'vertical'
+        arrow_pos: 'right_mid'
+        size_hint: None, None
+        size: '60dp', '80dp'
+        pos_hint: {'right': 0.7}
+        center_y: root.height / 12
+        ButtonOfExperiment:
+            text: '创建表格'
+            on_release: root.show_table_popup()
+        ButtonOfExperiment:
+            text: '表格绘图'
+            on_release: root.show_chart_popup()
+        ButtonOfExperiment:
+            text: '删除表图'
+            on_release: root.show_dele_popup()
+    Popup:
+        id: mypt
+        title: '- operation -'
+        title_align: 'center'
+        size_hint: 0.8, 0.4
+        pos_hint: {'right': 0.9, 'top': 0.7}
+        BoxLayout:
+            orientation: 'vertical'
+            GridLayout:
+                cols: 2
+                spacing: '10dp'
+                Label:
+                    text: '章节'
+                Spinner:
+                    id: myspt
+                    text: '点击选择'
+                    values: ['目的', '原理', '材料', '步骤', '结果', '讨论']
+                    size_hint_x: None
+                    width: root.width / 2
+                Label:
+                    text: '标题'
+                TextInput:
+                    id: tt_input
+                    multiline: False
+            BoxLayout:
+                padding: '10dp'
+                spacing: '10dp'
+                Label:
+                    text: '行数'
+                TextInput:
+                    id: tr_input
+                    multiline: False
+                    size_hint_y: 0.6
+                    pos_hint: {'y': 0.2}
+                Label:
+                    text: '列数'
+                TextInput:
+                    id: tc_input
+                    multiline: False
+                    size_hint_y: 0.6
+                    pos_hint: {'y': 0.2}
+            GridLayout:
+                cols: 2
+                padding: '10dp'
+                spacing: '10dp'
+                Button:
+                    text: '创建'
+                    background_color: 0, 0.749, 1, 1
+                    on_release: root.add_table()
+                Button:
+                    text: '取消'
+                    background_color: 0, 0.749, 1, 1
+                    on_release: root.show_table_popup()
+    Popup:
+        id: mypc
+        title: '- operation -'
+        title_align: 'center'
+        size_hint: 0.8, 0.66
+        pos_hint: {'right': 0.9, 'top': 0.83}
+        BoxLayout:
+            orientation: 'vertical'
+            GridLayout:
+                cols: 2
+                spacing: '10dp'
+                size_hint_y: None
+                height: '280dp'
+                Label:
+                    text: '来源'
+                Spinner:
+                    id: myspc
+                    text: '点击选择数据来源'
+                    size_hint_x: None
+                    width: root.width / 2
+                Label:
+                    text: '章节'
+                Spinner:
+                    id: myspcs
+                    text: '点击选择所属章节'
+                    values: ['目的', '原理', '材料', '步骤', '结果', '讨论']
+                    size_hint_x: None
+                    width: root.width / 2
+                Label:
+                    text: '插值'
+                Spinner:
+                    id: myspci
+                    text: '点击选择插值方法'
+                    values: ['zero', 'linear', 'quadratic', 'cubic']
+                    size_hint_x: None
+                    width: root.width / 2
+                Label:
+                    text: '标题'
+                TextInput:
+                    id: ct_input
+                    multiline: False
+                Label:
+                    text: '行号'
+                TextInput:
+                    id: cr_input
+                    multiline: False
+                Label:
+                    text: 'OR'
+                    font_size: '20sp'
+                Label:
+                    text: '仅支持多行绘图或多列绘图，只接受数字和英文逗号!!!\n如果x值为空，将默认原表格第1行/第1列作为x值。\n第1行与第1列认作表头，不会被纳入y值。'
+                    font_size: '8sp'
+                Label:
+                    text: '列号'
+                TextInput:
+                    id: cc_input
+                    multiline: False
+                Label:
+                    text: 'x值'
+                TextInput:
+                    id: cx_input
+                    multiline: False
+            BoxLayout:
+                padding: '10dp'
+                spacing: '10dp'
+                Label:
+                    text: 'x标签'
+                TextInput:
+                    id: cxl_input
+                    multiline: False
+                    size_hint_y: 0.6
+                    pos_hint: {'y': 0.2}
+                Label:
+                    text: 'y标签'
+                TextInput:
+                    id: cyl_input
+                    multiline: False
+                    size_hint_y: 0.6
+                    pos_hint: {'y': 0.2}
+            GridLayout:
+                cols: 2
+                padding: '10dp'
+                spacing: '10dp'
+                Button:
+                    text: '创建'
+                    background_color: 0, 0.749, 1, 1
+                    on_release: root.add_chart()
+                Button:
+                    text: '取消'
+                    background_color: 0, 0.749, 1, 1
+                    on_release: root.show_chart_popup()
+    Popup:
+        id: mypd
+        title: '- operation -'
+        title_align: 'center'
+        size_hint: 0.8, 0.3
+        pos_hint: {'right': 0.9, 'top': 0.65}
+        BoxLayout:
+            orientation: 'vertical'
+            GridLayout:
+                cols: 2
+                spacing: '10dp'
+                Label:
+                    text: '表格'
+                Spinner:
+                    id: myspdt
+                    text: '点击选择'
+                    size_hint_x: None
+                    width: root.width / 2
+                Label:
+                    text: '图片'
+                Spinner:
+                    id: myspdc
+                    text: '点击选择'
+                    size_hint_x: None
+                    width: root.width / 2
+            GridLayout:
+                cols: 2
+                size_hint_y: 0.9
+                padding: '10dp'
+                spacing: '10dp'
+                Button:
+                    text: '删除'
+                    background_color: 1, 0, 0, 1
+                    on_release: root.dele_widget()
+                Button:
+                    text: '取消'
+                    background_color: 0, 0.749, 1, 1
+                    on_release: root.show_dele_popup()

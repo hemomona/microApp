@@ -49,7 +49,7 @@ from kivy.uix.textinput import TextInput
 from plyer import email, storagepath, uniqueid
 
 from sql import sql_create_table, sql_select_example, sql_insert_example, sql_select_records, sql_disable_arecord, \
-    sql_insert_arecord, sql_update_arecord
+    sql_insert_arecord, sql_update_arecord, sql_select_arecord
 
 # replace default font of kivy to display Chinese
 resource_add_path(os.path.abspath('./font'))
@@ -184,22 +184,6 @@ class RecordsScreen(Screen):
         self.manager.current = 'arecord'
 
 
-# Declare ARecordScreen in arecord.kv
-class ARecordScreen(Screen):
-    record_id = NumericProperty(1)                      # comes from RecordsScreen.active_record_id
-
-    # bind it to the active_record_id in Micro.kv, just for showing on_ attribute of Kivy
-    # Now this function is useless
-    def on_record_id(self, widget, records):
-        pass
-
-    def goto_records(self):
-        self.manager.current = 'records'
-
-    def save_arecord(self):
-        print('have not implemented')
-
-
 # Declare InformationScreen in information.kv
 class InformationScreen(Screen):
     subject = ObjectProperty()
@@ -292,7 +276,7 @@ class ExperimentScreen(Screen):
     chart_xaxis = ObjectProperty()
     chart_xlabel = ObjectProperty()
     chart_ylabel = ObjectProperty()
-    # in the _picture.json storage, it is title: {data, row, col, section}
+    # in the _chart.json storage, it is title: {path, section}
     charts = {}                                         # (title, [chart instance, filepath, section])
 
     def __init__(self, **kwargs):
@@ -319,8 +303,9 @@ class ExperimentScreen(Screen):
         if self.pc in self.children:
             self.remove_widget(self.pc)
         else:
-            table_store = JsonStore(data_path + str(self.record_id) + '_table.json')
-            self.spc.values = table_store.keys()
+            # table_store = JsonStore(data_path + str(self.record_id) + '_table.json')
+            # self.spc.values = table_store.keys()
+            self.spc.values = self.tables.keys()
             self.remove_widget(self.bb)
             self.add_widget(self.pc)
 
@@ -419,6 +404,7 @@ class ExperimentScreen(Screen):
             title = self.chart_title.text
             x = []
             y = []
+            ll = []                                       # legend labels
             illegal = False                               # if the data is illegal
             illegal_reason = ''
             if self.chart_rows.text:                      # access rows
@@ -465,6 +451,7 @@ class ExperimentScreen(Screen):
                         if illegal:
                             break
                         y.append(l)
+                        ll.append(row)
             else:                                           # access cols
                 if self.chart_xaxis.text:
                     xaxis = re.sub('[^0-9^,.]', '', self.chart_xaxis.text)       # only save number, ,, ..
@@ -511,6 +498,7 @@ class ExperimentScreen(Screen):
                         if illegal:
                             break
                         y.append(l)
+                        ll.append(col)
 
             if illegal:
                 Popup(title='× error ×', title_align='center', size_hint=(0.6, 0.2),
@@ -526,12 +514,13 @@ class ExperimentScreen(Screen):
                     ay = np.array(ay)
                     ay_smooth = interpolate.interp1d(x, ay, kind=self.spci.text)(x_smooth)
                     plt.plot(x_smooth, ay_smooth)
-                plt.legend()
+                plt.legend(ll)
                 imgpath = data_path + str(self.record_id) + '_' + title + '.png'
                 plt.savefig(imgpath)
                 chart = BoxLayout(orientation='vertical')
                 chart.add_widget(Label(text=title + '-' + self.spcs.text))
-                chart.add_widget(Image(source=imgpath))
+                # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BUG here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                chart.add_widget(Image(source=imgpath, allow_stretch=True, size_hint=(None, None), size=('360dp', '240dp')))
                 self.charts[title] = [chart, imgpath, self.spcs.text]
                 self.lo.add_widget(chart)
                 self.remove_widget(self.pc)
@@ -558,6 +547,172 @@ class ExperimentScreen(Screen):
 
     def goto_main(self):
         self.manager.current = 'main'
+
+
+# Declare ARecordScreen in arecord.kv
+# This can extend from ExperimentScreen. BUT I want to optimize my code
+class ARecordScreen(Screen):
+    record_id = NumericProperty(1)                      # comes from RecordsScreen.active_record_id
+    lo = BoxLayout()                                    # BoxLayout in ScrollView
+    bb = Bubble()                                       # Bubble usually is hidden
+    pt = Popup()                                        # Popup of table-create
+    pc = Popup()                                        # Popup of chart-create
+    pd = Popup()                                        # Popup of delete widget
+    spt = ObjectProperty()                              # Spinner of table-create popup
+    spc = ObjectProperty()                              # Spinner of data reference in chart-create popup
+    spdt = ObjectProperty()                             # Spinner of delete table popup
+    spdc = ObjectProperty()                             # Spinner of delete chart popup
+    spcs = ObjectProperty()                             # Spinner of section in chart-create popup
+    spci = ObjectProperty()                             # Spinner of interpolation in chart-create popup
+    table_title = ObjectProperty()
+    table_rows = ObjectProperty()
+    table_cols = ObjectProperty()
+    tables = {}                                         # (title, [table instance, row, col, section])
+    chart_title = ObjectProperty()
+    chart_rows = ObjectProperty()
+    chart_cols = ObjectProperty()
+    chart_xaxis = ObjectProperty()
+    chart_xlabel = ObjectProperty()
+    chart_ylabel = ObjectProperty()
+    charts = {}                                         # (title, [chart instance, filepath, section])
+    sections = ['目的', '原理', '材料', '步骤', '结果', '讨论']
+
+    # bind it to the active_record_id in Micro.kv in last version.
+    # Now this function is useless, preserving it for showing on_ attribute of Kivy
+    def on_record_id(self, widget, records):
+        pass
+
+    def __init__(self, **kwargs):
+        super(ARecordScreen, self).__init__(**kwargs)
+        self.remove_widget(self.bb)
+        self.remove_widget(self.pt)
+        self.remove_widget(self.pc)
+        self.remove_widget(self.pd)
+        Clock.schedule_once(self.show_arecord)
+
+    def show_arecord(self, dt):
+        conn = sqlite3.connect(db_filepath)
+        curs = conn.cursor()
+        # cursor parameter should be tuple, or it causes ValueError
+        curs.execute(sql_select_arecord, (self.record_id, ))
+        record = curs.fetchone()
+        for secpart in range(6):
+            ti = TextInput(text=record[secpart], halign='left', size_hint_y=None)
+            ti.bind(minimum_height=ti.setter('height'))
+            self.lo.add_widget(Label(text=self.sections[secpart], size_hint_x=0.1, pos_hint={'right': 0.2}))
+            self.lo.add_widget(ti)
+            table_store = JsonStore(data_path + str(self.record_id) + '_table.json')
+            for k, v in table_store.find(section=self.sections[secpart]):
+                self.lo.add_widget(Label(text=k))
+                grid = GridLayout(cols=v['col'], size_hint_y=None, height=dp(20*v['row']))
+                for d in v['data']:
+                    grid.add_widget(TextInput(text=d, font_size='12sp', multiline=False))
+                self.lo.add_widget(grid)
+                self.tables[k] = [grid, v['row'], v['col'], v['section']]
+        conn.commit()
+        conn.close()
+
+    def show_bubble(self):
+        if self.bb in self.children:
+            self.remove_widget(self.bb)
+        else:
+            self.add_widget(self.bb)
+
+    def show_table_popup(self):
+        if self.pt in self.children:
+            self.remove_widget(self.pt)
+        else:
+            self.remove_widget(self.bb)
+            self.add_widget(self.pt)
+
+    def show_chart_popup(self):
+        if self.pc in self.children:
+            self.remove_widget(self.pc)
+        else:
+            self.spc.values = self.tables.keys()
+            self.remove_widget(self.bb)
+            self.add_widget(self.pc)
+
+    def show_dele_popup(self):
+        if self.pd in self.children:
+            self.remove_widget(self.pd)
+        else:
+            self.spdt.values = self.tables.keys()
+            self.spdc.values = self.charts.keys()
+            self.remove_widget(self.bb)
+            self.add_widget(self.pd)
+
+    def add_table(self):
+        table_store = JsonStore(data_path + str(self.record_id) + '_table.json')
+        if self.spt.text not in self.spt.values:
+            self.spt.is_open = True
+        elif table_store.exists(self.table_title.text):
+            Popup(title='× error ×', title_align='center', size_hint=(0.6, 0.2),
+                  content=Label(text='此表格已存在！')).open()
+            self.table_title.text = ''
+        elif not self.table_rows.text.isdigit():
+            self.table_rows.text = ''
+        elif not self.table_cols.text.isdigit():
+            self.table_cols.text = ''
+        else:
+            title = self.table_title.text
+            rownum = int(self.table_rows.text)
+            colnum = int(self.table_cols.text)
+            self.lo.add_widget(Label(text=title + '-' + self.spt.text))
+            table = GridLayout(cols=colnum, size_hint_y=None, height=dp(20*rownum))
+            for c in range(rownum*colnum):
+                table.add_widget(TextInput(font_size='12sp', multiline=False))
+            self.tables[title] = [table, rownum, colnum, self.spt.text]
+            self.lo.add_widget(table)
+            self.table_title.text = ''
+            self.table_rows.text = ''
+            self.table_cols.text = ''
+            self.remove_widget(self.pt)
+
+    def save_tables(self):
+        table_store = JsonStore(data_path + str(self.record_id) + '_table.json')
+        for k, v in self.tables.items():                # access every table
+            l = []
+            for ti in v[0].children:                    # access every cell
+                l.append(ti.text)
+            l.reverse()
+            table_store.put(k, data=l, row=v[1], col=v[2], section=v[3])
+
+    def dele_widget(self):
+        table_store = JsonStore(data_path + str(self.record_id) + '_table.json')
+        chart_store = JsonStore(data_path + str(self.record_id) + '_chart.json')
+        if self.spdt.text in self.spdt.values:
+            removed_table = self.tables.pop(self.spdt.text)
+            self.lo.remove_widget(removed_table[0])
+            if table_store.exists(self.spdt.text):
+                table_store.delete(self.spdt.text)
+        if self.spdc.text in self.spdc.values:
+            removed_chart = self.charts.pop(self.spdc.text)
+            self.lo.remove_widget(removed_chart[0])
+            if chart_store.exists(self.spdc.text):
+                chart_store.delete(self.spdc.text)
+        self.remove_widget(self.pd)
+
+    def goto_records(self):
+        self.manager.current = 'records'
+
+    def save_arecord(self):
+        self.save_tables()
+        record = []
+        for ti in self.lo.children:
+            if isinstance(ti, TextInput):
+                record.append(ti.text)
+        record.reverse()
+        conn = sqlite3.connect(db_filepath)
+        curs = conn.cursor()
+        curs.execute(sql_update_arecord,
+                     (record[0], record[1], record[2], record[3], record[4], record[5], self.record_id))
+        conn.commit()
+        conn.close()
+        Popup(title='~ information ~', title_align='center', size_hint=(0.4, 0.2),
+              content=Label(text='保存成功！')).open()
+        self.lo.clear_widgets()
+        Clock.schedule_once(self.show_arecord)
 
 
 class MicroApp(App):

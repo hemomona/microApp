@@ -14,6 +14,7 @@
 
 <TextInputOfExperiment@TextInput>
     size_hint_y: None
+    height: self.minimum_height
 
 <ButtonOfExperiment@Button>
     font_size: '13sp'
@@ -95,32 +96,27 @@
                 text: '目的'
             TextInputOfExperiment:
                 id: purpose_input
-                height: '120dp'
+#                height: '120dp'
             LabelOfExperiment:
                 text: '原理'
             TextInputOfExperiment:
                 id: principle_input
-                height: '240dp'
             LabelOfExperiment:
                 text: '材料'
             TextInputOfExperiment:
                 id: equipment_input
-                height: '80dp'
             LabelOfExperiment:
                 text: '步骤'
             TextInputOfExperiment:
                 id: steps_input
-                height: '360dp'
             LabelOfExperiment:
                 text: '结果'
             TextInputOfExperiment:
                 id: result_input
-                height: '360dp'
             LabelOfExperiment:
                 text: '讨论'
             TextInputOfExperiment:
                 id: discussion_input
-                height: '360dp'
     FloatLayout:
         Button:
             text: '+'
