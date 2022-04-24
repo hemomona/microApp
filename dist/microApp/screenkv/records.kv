@@ -1,0 +1,51 @@
+#:kivy 2.1.0
+
+<RecordsScreen>:
+    # id: 'records' id does not work with a screen
+    name: "records"
+    AnchorLayout:
+        anchor_y: 'top'
+#        canvas.before:
+#            Color:
+#                rgba: 1, 1, 1, 0.8
+#            Rectangle:
+#                size: self.size
+#                pos: self.pos
+        BoxLayout:
+            size_hint_y: None
+            height: '30dp'
+#            canvas.before:
+#                Color:
+#                    rgba: 0, 0, 0
+#                Rectangle:
+#                    size: self.size
+#                    pos: self.pos
+            Label:
+                text: '查看记录'
+                font_name: msyhbd
+                font_size: '20sp'
+#                color: 0, 0, 0
+    AnchorLayout:
+        anchor_x: 'left'
+        anchor_y: 'top'
+        Button:
+            text: '<首页'
+            size_hint: None, None
+            size: '60dp', '30dp'
+            font_size: '20sp'
+            color: 0, 0, 1
+            background_normal: ''
+            background_color: 0, 0, 0, 0
+            on_release: root.goto_main()
+    AnchorLayout:
+        anchor_x: 'right'
+        anchor_y: 'top'
+        Button:
+            text: '删除×'
+            size_hint: None, None
+            size: '60dp', '30dp'
+            font_size: '20sp'
+            color: 1, 0, 0
+            background_normal: ''
+            background_color: 0, 0, 0, 0
+            on_release: root.dele_records()

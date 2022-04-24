@@ -8,8 +8,10 @@
 # Email      ：18146856052@163.com
 # version    ：python 3.7 kivy 2.1
 # Description：main class of micro app,
+              directory "build" and "dist" place the final exe using pyInstaller.
               directory "data" places the files related with users,
-              directory "discard" places codes what I test,
+              it places ID_table.json and ID_picture.json, needs to place something before package, or will be excluded.
+              directory "discard" places codes what I test, it should be excluded when package.
               directory "font" is used to replace default font. can not modify config.py of kivy in my ubuntu18,
               directory "pics" places pictures embedded in the app.
               table_store.put(k, data=l, row=v[1], col=v[2], section=v[3])
@@ -17,6 +19,7 @@
 """
 import os
 import re
+import sys
 import sqlite3
 import logging.config
 from collections import deque
@@ -31,7 +34,7 @@ from kivy.clock import Clock
 from kivy.metrics import dp
 from kivy.properties import ObjectProperty, NumericProperty
 from kivy.resources import resource_add_path
-from kivy.uix.image import Image  # !!!!it should be this, not kivy.uix.image!!!!
+from kivy.uix.image import Image                        # !!!!it should be this, not kivy.core.image!!!!
 from kivy.core.text import LabelBase
 from kivy.core.window import Window
 from kivy.lang import Builder
@@ -51,8 +54,16 @@ from plyer import email, storagepath, uniqueid
 from sql import sql_create_table, sql_select_example, sql_insert_example, sql_select_records, sql_disable_arecord, \
     sql_insert_arecord, sql_update_arecord, sql_select_arecord
 
+# 先获取当前运行时临时目录路径，pyInstaller会将程序在C:\Users\14750\下运行，因此不能使用相对路径
+if getattr(sys, 'microApp', None):
+    basedir = sys._MEIPASS
+else:
+    basedir = os.path.dirname(__file__)
+
 # replace default font of kivy to display Chinese
-resource_add_path(os.path.abspath('./font'))
+# resource_add_path(os.path.abspath('./font'))
+# use pyinstaller
+resource_add_path(os.path.join(basedir, 'font'))
 LabelBase.register('Roboto', 'MSYH.TTC')
 
 # replace default font of matplotlib to display Chinese
@@ -62,12 +73,15 @@ plt.style.use('ggplot')
 
 # basic info here
 app_version = '1.0.0'
-db_filepath = './records.db'
-log_filepath = './logging.log'
-# data directory places ID_table.json and ID_picture.json,
-# need to place something before package, or it will be excluded.
-data_path = './data/'
-logging.config.fileConfig('./log.conf')
+# db_filepath = './records.db'
+# log_filepath = './logging.log'
+# data_path = './data/'
+# logging.config.fileConfig('./log.conf')
+# use pyinstaller
+db_filepath = os.path.join(basedir, 'records.db')
+log_filepath = os.path.join(basedir, 'logging.log')
+data_path = os.path.join(basedir, 'data/')
+logging.config.fileConfig(os.path.join(basedir, 'log.conf'))
 logger = logging.getLogger('mylog')
 
 # Loading Multiple .kv files
@@ -105,6 +119,7 @@ class MainScreen(Screen):
                         '保存路径: ' + app_path + '\n'
                         '设备ID: ' + device_id + '\n'
                         '其它: \n\n\n日志信息: ' + log_info,
+                   # if on Android True; if on Windows False
                    create_chooser=True)
 
 
@@ -181,6 +196,7 @@ class RecordsScreen(Screen):
     def goto_arecord(self, instance):
         self.active_record_id = int(self.button_ref.get(instance))
         self.manager.get_screen('arecord').record_id = self.active_record_id
+        Clock.schedule_once(self.manager.get_screen('arecord').show_arecord)
         self.manager.current = 'arecord'
 
 
@@ -303,10 +319,10 @@ class ExperimentScreen(Screen):
         if self.pc in self.children:
             self.remove_widget(self.pc)
         else:
-            # the following 2 lines for test
-            # table_store = JsonStore(data_path + str(self.record_id) + '_table.json')
-            # self.spc.values = table_store.keys()
-            self.spc.values = self.tables.keys()
+            # the following 2 lines is a compromise
+            table_store = JsonStore(data_path + str(self.record_id) + '_table.json')
+            self.spc.values = table_store.keys()
+            # self.spc.values = self.tables.keys()
             self.remove_widget(self.bb)
             self.add_widget(self.pc)
 
@@ -328,8 +344,8 @@ class ExperimentScreen(Screen):
                                           self.steps.text, self.result.text, self.discussion.text, self.record_id))
         conn.commit()
         conn.close()
-        # Clock.schedule_once(self.manager.get_screen('records').show_records)
-        Popup(title='~ information ~', title_align='center', size_hint=(0.4, 0.2),
+        Clock.schedule_once(self.manager.get_screen('records').show_records)
+        Popup(title='~ information ~', title_align='center', size_hint=(0.6, 0.2),
               content=Label(text='保存成功！')).open()
 
     def add_table(self):
@@ -598,9 +614,13 @@ class ARecordScreen(Screen):
         self.remove_widget(self.pt)
         self.remove_widget(self.pc)
         self.remove_widget(self.pd)
-        Clock.schedule_once(self.show_arecord)
+        # Clock.schedule_once(self.show_arecord)
 
     def show_arecord(self, dt):
+        # initialize
+        self.lo.clear_widgets()
+        self.tables = {}
+        self.charts = {}
         conn = sqlite3.connect(db_filepath)
         curs = conn.cursor()
         # cursor parameter should be tuple, or it causes ValueError
@@ -647,7 +667,8 @@ class ARecordScreen(Screen):
         if self.pc in self.children:
             self.remove_widget(self.pc)
         else:
-            self.spc.values = self.tables.keys()
+            table_store = JsonStore(data_path + str(self.record_id) + '_table.json')
+            self.spc.values = table_store.keys()
             self.remove_widget(self.bb)
             self.add_widget(self.pc)
 
@@ -879,6 +900,7 @@ class ARecordScreen(Screen):
         self.remove_widget(self.pd)
 
     def goto_records(self):
+        Clock.schedule_once(self.manager.get_screen('records').show_records)
         self.manager.current = 'records'
 
     def save_arecord(self):
@@ -895,7 +917,7 @@ class ARecordScreen(Screen):
                      (record[0], record[1], record[2], record[3], record[4], record[5], self.record_id))
         conn.commit()
         conn.close()
-        Popup(title='~ information ~', title_align='center', size_hint=(0.4, 0.2),
+        Popup(title='~ information ~', title_align='center', size_hint=(0.6, 0.2),
               content=Label(text='保存成功！')).open()
         self.lo.clear_widgets()
         Clock.schedule_once(self.show_arecord)

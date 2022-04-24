@@ -1,0 +1,51 @@
+This is test information!
+2022-04-10 11:31:27,591 - mylog - ERROR     - main.py  : 300 line - can only concatenate str (not "list") to str
+Traceback (most recent call last):
+  File "D:/code/microApp/main.py", line 298, in <module>
+    MicroApp().run()
+  File "D:\code\microApp\venv\lib\site-packages\kivy\app.py", line 955, in run
+    runTouchApp()
+  File "D:\code\microApp\venv\lib\site-packages\kivy\base.py", line 574, in runTouchApp
+    EventLoop.mainloop()
+  File "D:\code\microApp\venv\lib\site-packages\kivy\base.py", line 339, in mainloop
+    self.idle()
+  File "D:\code\microApp\venv\lib\site-packages\kivy\base.py", line 383, in idle
+    self.dispatch_input()
+  File "D:\code\microApp\venv\lib\site-packages\kivy\base.py", line 334, in dispatch_input
+    post_dispatch_input(*pop(0))
+  File "D:\code\microApp\venv\lib\site-packages\kivy\base.py", line 302, in post_dispatch_input
+    wid.dispatch('on_touch_up', me)
+  File "kivy\_event.pyx", line 731, in kivy._event.EventDispatcher.dispatch
+  File "D:\code\microApp\venv\lib\site-packages\kivy\uix\behaviors\button.py", line 179, in on_touch_up
+    self.dispatch('on_release')
+  File "kivy\_event.pyx", line 727, in kivy._event.EventDispatcher.dispatch
+  File "kivy\_event.pyx", line 1307, in kivy._event.EventObservers.dispatch
+  File "kivy\_event.pyx", line 1191, in kivy._event.EventObservers._dispatch
+  File "D:\code\microApp\venv\lib\site-packages\kivy\lang\builder.py", line 55, in custom_callback
+    exec(__kvlang__.co_value, idmap)
+  File "D:\code\microApp\micro.kv", line 115, in <module>
+    on_release: root.goto_feedback()
+  File "D:/code/microApp/main.py", line 80, in goto_feedback
+    '����: \n\n\n��־��Ϣ: ' + log_info,
+TypeError: can only concatenate str (not "list") to str
+2022-04-24 20:33:41,703 - mylog - ERROR     - main.py  : 947 line - 
+Traceback (most recent call last):
+  File "main.py", line 945, in <module>
+  File "kivy\app.py", line 955, in run
+  File "kivy\base.py", line 574, in runTouchApp
+  File "kivy\base.py", line 339, in mainloop
+  File "kivy\base.py", line 383, in idle
+  File "kivy\base.py", line 334, in dispatch_input
+  File "kivy\base.py", line 302, in post_dispatch_input
+  File "kivy\_event.pyx", line 731, in kivy._event.EventDispatcher.dispatch
+  File "kivy\uix\behaviors\button.py", line 179, in on_touch_up
+  File "kivy\_event.pyx", line 727, in kivy._event.EventDispatcher.dispatch
+  File "kivy\_event.pyx", line 1307, in kivy._event.EventObservers.dispatch
+  File "kivy\_event.pyx", line 1191, in kivy._event.EventObservers._dispatch
+  File "kivy\lang\builder.py", line 55, in custom_callback
+  File "D:\code\microApp\dist\microApp\micro.kv", line 115, in <module>
+    on_release: root.goto_feedback()
+  File "main.py", line 106, in goto_feedback
+  File "plyer\facades\storagepath.py", line 103, in get_application_dir
+  File "plyer\facades\storagepath.py", line 135, in _get_application_dir
+NotImplementedError
